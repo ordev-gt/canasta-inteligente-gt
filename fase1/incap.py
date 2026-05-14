@@ -1,9 +1,11 @@
+import re
 import pickle 
 import pdfplumber
+import unicodedata
 import pandas as pd
-from typing import List, Tuple
-
-
+from difflib import SequenceMatcher
+from typing import List, Tuple, Dict
+from rapidfuzz import fuzz
 """
 Módulo de carga y procesamiento de datos del INCAP.
 
@@ -57,6 +59,8 @@ class CT_INCAP:
         "fraccion_comestible_pct",
     ]
 
+    NORMALIZED_NAME_COL: str = "nombre_normalizado"
+
     def __init__(self, source_filename):
         """
         Inicializa la clase CT_INCAP y carga los datos nutricionales.
@@ -94,8 +98,13 @@ class CT_INCAP:
         if cache_result is not None: 
             self.categories = cache_result[0]
             self.composition_table_food = cache_result[1]
-            return 
-        
+
+            if self.NORMALIZED_NAME_COL not in self.composition_table_food.columns:
+                self.composition_table_food = self.__ensure_normalized_columns(
+                    self.composition_table_food
+                )
+
+            return
         self.categories, self.composition_table_food = self.__extract_from_pdf(source_filename)
         
         self.source_filename = source_filename
@@ -403,9 +412,410 @@ class CT_INCAP:
         others = [c for c in df.columns if c not in firsts]
 
         df = df[[c for c in firsts if c in df.columns] + others]
+        df = df[self.NORMALIZED_NAME_COL] = (
+            df["nombre"]
+            .fillna("")
+            .apply(self.__normalize_text)
+        )
 
         return categories, df
         
+
+    def __normalize_text(self, text: str) -> str:
+        """
+        Normaliza un texto para facilitar la comparación entre nombres de alimentos.
+
+        El proceso aplicado incluye:
+        - Conversión a minúsculas.
+        - Eliminación de tildes.
+        - Eliminación de signos de puntuación.
+        - Normalización de espacios múltiples.
+        - Eliminación de palabras vacías frecuentes en descripciones alimentarias.
+
+        Args:
+            text (str): Texto original a normalizar.
+
+        Returns:
+            str: Texto normalizado.
+        """
+        if text is None:
+            return ""
+
+        text = str(text).lower().strip()
+
+        text = "".join(
+            char for char in unicodedata.normalize("NFD", text)
+            if unicodedata.category(char) != "Mn"
+        )
+
+        text = re.sub(r"[^a-z0-9\s]", " ", text)
+        text = re.sub(r"\s+", " ", text).strip()
+
+        stopwords = {
+            "de", "del", "la", "el", "los", "las", "y", "con",
+            "sin", "para", "en", "por", "tipo"
+        }
+
+        tokens = [
+            token for token in text.split()
+            if token not in stopwords
+        ]
+
+        return " ".join(tokens)
+
+
+    def __ensure_normalized_columns(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Asegura que el DataFrame tenga columnas auxiliares para búsqueda aproximada.
+
+        Actualmente agrega la columna nombre_normalizado, calculada a partir de la
+        columna nombre. Esta columna permite evitar reprocesar los nombres en cada
+        búsqueda y queda persistida cuando el DataFrame se guarda en caché.
+
+        Args:
+            df (pd.DataFrame): DataFrame de composición nutricional.
+
+        Returns:
+            pd.DataFrame: DataFrame con columnas normalizadas agregadas.
+        """
+        if "nombre" not in df.columns:
+            raise ValueError("El DataFrame debe contener una columna llamada 'nombre'.")
+
+        df = df.copy()
+
+        df[self.NORMALIZED_NAME_COL] = (
+            df["nombre"]
+            .fillna("")
+            .apply(self.__normalize_text)
+        )
+
+        return df
+
+
+    def __char_ngrams(self, text: str, n: int = 3) -> set:
+        """
+        Genera n-gramas de caracteres para medir similitud textual aproximada.
+
+        Args:
+            text (str): Texto normalizado.
+            n (int): Tamaño del n-grama. Por defecto es 3.
+
+        Returns:
+            set: Conjunto de n-gramas generados.
+        """
+        text = f" {text} "
+
+        if len(text) < n:
+            return {text.strip()} if text.strip() else set()
+
+        return {
+            text[i:i + n]
+            for i in range(len(text) - n + 1)
+        }
+
+
+    def __jaccard_similarity(self, a: str, b: str, ngram_size: int = 3) -> float:
+        """
+        Calcula similitud Jaccard usando n-gramas de caracteres.
+
+        Args:
+            a (str): Primer texto normalizado.
+            b (str): Segundo texto normalizado.
+            ngram_size (int): Tamaño de los n-gramas de caracteres. Valores menores
+                aumentan la sensibilidad a coincidencias parciales, mientras que
+                valores mayores hacen la comparación más estricta.
+
+        Returns:
+            float: Similitud entre 0 y 1.
+        """
+        grams_a = self.__char_ngrams(a, n=ngram_size)
+        grams_b = self.__char_ngrams(b, n=ngram_size)
+
+        if not grams_a or not grams_b:
+            return 0.0
+
+        return len(grams_a & grams_b) / len(grams_a | grams_b)
+
+    def __sequence_similarity(self, a: str, b: str) -> float:
+        """
+        Calcula similitud secuencial entre dos cadenas.
+
+        Se usa como alternativa liviana a Levenshtein cuando no se requiere una
+        dependencia externa. El resultado está entre 0 y 1.
+
+        Args:
+            a (str): Primer texto normalizado.
+            b (str): Segundo texto normalizado.
+
+        Returns:
+            float: Similitud entre 0 y 1.
+        """
+        if not a or not b:
+            return 0.0
+
+        return SequenceMatcher(None, a, b).ratio()
+
+
+    def __token_sort_similarity(self, a: str, b: str) -> float:
+        """
+        Calcula similitud entre textos ignorando parcialmente el orden de palabras.
+
+        Args:
+            a (str): Primer texto normalizado.
+            b (str): Segundo texto normalizado.
+
+        Returns:
+            float: Similitud entre 0 y 1.
+        """
+        if not a or not b:
+            return 0.0
+
+        if fuzz is not None:
+            return fuzz.token_sort_ratio(a, b) / 100
+
+        sorted_a = " ".join(sorted(a.split()))
+        sorted_b = " ".join(sorted(b.split()))
+
+        return self.__sequence_similarity(sorted_a, sorted_b)
+
+
+    def __token_set_similarity(self, a: str, b: str) -> float:
+        """
+        Calcula similitud entre conjuntos de palabras.
+
+        Es útil cuando un nombre contiene palabras adicionales respecto al otro,
+        por ejemplo: 'arroz blanco' contra 'arroz blanco corriente'.
+
+        Args:
+            a (str): Primer texto normalizado.
+            b (str): Segundo texto normalizado.
+
+        Returns:
+            float: Similitud entre 0 y 1.
+        """
+        if not a or not b:
+            return 0.0
+
+        if fuzz is not None:
+            return fuzz.token_set_ratio(a, b) / 100
+
+        tokens_a = set(a.split())
+        tokens_b = set(b.split())
+
+        if not tokens_a or not tokens_b:
+            return 0.0
+
+        intersection = tokens_a & tokens_b
+        union = tokens_a | tokens_b
+
+        return len(intersection) / len(union)
+
+
+    def __partial_similarity(self, a: str, b: str) -> float:
+        """
+        Calcula similitud parcial entre dos cadenas.
+
+        Esta métrica ayuda cuando una cadena está contenida dentro de otra o cuando
+        una descripción es mucho más larga que la otra.
+
+        Args:
+            a (str): Primer texto normalizado.
+            b (str): Segundo texto normalizado.
+
+        Returns:
+            float: Similitud entre 0 y 1.
+        """
+        if not a or not b:
+            return 0.0
+
+        if fuzz is not None:
+            return fuzz.partial_ratio(a, b) / 100
+
+        shorter, longer = sorted([a, b], key=len)
+
+        if shorter in longer:
+            return 1.0
+
+        return self.__sequence_similarity(shorter, longer)
+
+
+    def __score_food_match(
+        self,
+        query_normalized: str,
+        candidate_normalized: str,
+        method_threshold: float = 0.75,
+        ngram_size: int = 3
+
+    ) -> Tuple[float, List[str], Dict[str, float]]:
+        """
+        Calcula la probabilidad de coincidencia entre un texto buscado y un alimento.
+
+        La probabilidad se calcula como el promedio de varias métricas normalizadas
+        entre 0 y 1. Todas las métricas tienen el mismo peso para evitar que una sola
+        domine el resultado. Además de la probabilidad agregada, la función devuelve
+        qué métodos superaron el umbral definido y, por tanto, respaldan la posible
+        coincidencia.
+
+        Métodos utilizados:
+            - exact:
+                Verifica si el texto buscado y el nombre candidato son exactamente
+                iguales después de la normalización. Es el criterio más estricto.
+
+            - contains:
+                Verifica si uno de los textos está contenido dentro del otro. Es útil
+                cuando el usuario busca un término corto y el alimento tiene una
+                descripción más larga, por ejemplo: 'arroz' contra 'arroz blanco crudo'.
+
+            - sequence:
+                Calcula la similitud secuencial entre ambas cadenas usando comparación
+                de caracteres. Ayuda a detectar textos parecidos con pequeñas diferencias
+                ortográficas.
+
+            - token_sort:
+                Compara los textos después de ordenar alfabéticamente sus palabras.
+                Es útil cuando ambos nombres tienen palabras similares, pero en distinto
+                orden, por ejemplo: 'leche entera polvo' contra 'polvo leche entera'.
+
+            - token_set:
+                Compara los conjuntos de palabras de ambos textos. Tolera palabras
+                adicionales en uno de los nombres, por ejemplo: 'frijol negro' contra
+                'frijol negro seco'.
+
+            - partial:
+                Calcula una similitud parcial entre cadenas. Es útil cuando una cadena
+                representa solo una parte relevante de la otra.
+
+            - char_ngram_jaccard:
+                Divide los textos en fragmentos cortos de caracteres y calcula el
+                traslape entre ellos mediante similitud Jaccard. Ayuda a capturar
+                variaciones menores, errores de escritura, plurales o diferencias
+                morfológicas.
+
+        Args:
+            query_normalized (str): Texto de búsqueda ya normalizado.
+            candidate_normalized (str): Nombre del alimento ya normalizado.
+            method_threshold (float): Umbral mínimo para considerar que un método
+                encontró una posible coincidencia.
+
+        Returns:
+            Tuple[float, List[str], Dict[str, float]]:
+                - Probabilidad agregada entre 0 y 1.
+                - Lista de métodos que consideran posible la coincidencia.
+                - Diccionario con el detalle de puntajes por método.
+        """
+        if not query_normalized or not candidate_normalized:
+            return 0.0, [], {}
+
+        exact_score = 1.0 if query_normalized == candidate_normalized else 0.0
+
+        contains_score = (
+            1.0
+            if query_normalized in candidate_normalized
+            or candidate_normalized in query_normalized
+            else 0.0
+        )
+
+        scores = {
+            "exact": exact_score,
+            "contains": contains_score,
+            "sequence": self.__sequence_similarity(query_normalized, candidate_normalized),
+            "token_sort": self.__token_sort_similarity(query_normalized, candidate_normalized),
+            "token_set": self.__token_set_similarity(query_normalized, candidate_normalized),
+            "partial": self.__partial_similarity(query_normalized, candidate_normalized),
+            "char_ngram_jaccard": self.__jaccard_similarity(query_normalized, candidate_normalized, ngram_size),
+        }
+
+        probability = sum(scores.values()) / len(scores)
+
+        valid_methods = [
+            method
+            for method, score in scores.items()
+            if score >= method_threshold
+        ]
+
+        return probability, valid_methods, scores
+
+
+    def search_food_matches(
+        self,
+        palabra: str,
+        top_n: int = 10,
+        min_probability: float = 0.55,
+        method_threshold: float = 0.75,
+        ngram_size: int = 3
+
+    ) -> List[Tuple[pd.Series, float, List[str], Dict[str, float]]]:
+        """
+        Busca alimentos similares a una palabra o frase dentro de la tabla INCAP.
+
+        La función compara la palabra recibida contra la columna nombre_normalizado.
+        Retorna una lista ordenada de posibles coincidencias. Cada resultado contiene:
+        - La fila completa del alimento como pd.Series.
+        - Una probabilidad agregada entre 0 y 1.
+        - La lista de métodos que detectaron una posible coincidencia.
+        - Un diccionario con el score obtenido por cada método.
+
+        Args:
+            palabra (str): Texto de búsqueda ingresado por el usuario.
+            top_n (int): Cantidad máxima de resultados a retornar.
+            min_probability (float): Probabilidad mínima para incluir un resultado.
+            method_threshold (float): Umbral usado para registrar qué métodos encontraron
+                una coincidencia posible.
+
+        Returns:
+            List[Tuple[pd.Series, float, List[str], Dict[str, float]]]:
+                Lista de tuplas con los resultados. Cada tupla contiene:
+                    - pd.Series: fila completa del alimento candidato.
+                    - float: probabilidad agregada de coincidencia entre 0 y 1.
+                    - List[str]: métodos que superaron el umbral de coincidencia.
+                    - Dict[str, float]: score individual obtenido por cada método.
+        """
+        if self.composition_table_food is None or self.composition_table_food.empty:
+            return []
+
+        if self.NORMALIZED_NAME_COL not in self.composition_table_food.columns:
+            self.composition_table_food = self.__ensure_normalized_columns(
+                self.composition_table_food
+            )
+        if ngram_size < 2:
+            raise ValueError("ngram_size debe ser mayor o igual a 2.")
+
+        if ngram_size > 5:
+            raise ValueError("ngram_size no debería ser mayor a 5 para nombres de alimentos.")
+        query_normalized = self.__normalize_text(palabra)
+
+        if not query_normalized:
+            return []
+
+        results = []
+
+        for _, row in self.composition_table_food.iterrows():
+            candidate_normalized = row.get(self.NORMALIZED_NAME_COL, "")
+
+            probability, valid_methods, method_scores = self.__score_food_match(
+            query_normalized=query_normalized,
+            candidate_normalized=candidate_normalized,
+            method_threshold=method_threshold,
+            ngram_size=ngram_size
+            )
+
+            if probability >= min_probability and valid_methods:
+                results.append(
+                    (
+                        row,
+                        round(float(probability), 4),
+                        valid_methods,
+                        {
+                            method: round(float(score), 4)
+                            for method, score in method_scores.items()
+                        }
+                    )
+                )
+
+        results.sort(key=lambda item: item[1], reverse=True)
+
+        return results[:top_n]
+
 
 if __name__ == '__main__':
     """
@@ -416,3 +826,15 @@ if __name__ == '__main__':
     se cargan los datos desde caché o se extraen directamente del PDF.
     """
     incapdata = CT_INCAP("./data/raw/tabladecomposiciondealimentos.pdf")
+    matches = incapdata.search_food_matches(
+        palabra="frijol negro",
+        top_n=5,
+        min_probability=0.55,
+        method_threshold=0.75
+    )
+    for row, probability, methods, scores in matches:
+        print(row["codigo"], row["nombre"])
+        print("Probabilidad:", probability)
+        print("Métodos válidos:", methods)
+        print("Scores:", scores)
+        print()
