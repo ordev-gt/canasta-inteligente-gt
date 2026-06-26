@@ -1,0 +1,6 @@
+pandas
+pyarrow>=13.0.0
+pdfplumber
+rapidfuzz
+openpyxl
+ipykernel

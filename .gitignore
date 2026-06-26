@@ -1,1 +1,6 @@
-unstarted_features/
+venv
+/data/raw/references
+data_loaders/cache/
+*.bak
+items.txt
+__pycache__
