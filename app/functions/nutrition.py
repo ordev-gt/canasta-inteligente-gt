@@ -289,6 +289,12 @@ PROTEIN_REQUIREMENTS = {
             "safe_reference_g_per_kg": 0.84,
             "safe_mixed_diet_g_per_kg": 1.12,
         },
+        float("inf"): {
+            "avg_weight_kg": 55,
+            "avg_requirement_g_per_kg": 0.66,
+            "safe_reference_g_per_kg": 0.83,
+            "safe_mixed_diet_g_per_kg": 1.12,
+        },
     },
 }
 def get_tmb(gender: str, age: float):
