@@ -118,6 +118,179 @@ TMB = {
     },
 }
 
+
+PROTEIN_REQUIREMENTS = {
+    "all": {
+        0.25: {
+            "avg_weight_kg": 4.85,
+            "avg_requirement_g_per_kg": 1.32,
+            "safe_reference_g_per_kg": 1.64,
+            "safe_mixed_diet_g_per_kg": None,
+        },
+        0.5: {
+            "avg_weight_kg": 6.67,
+            "avg_requirement_g_per_kg": 1.06,
+            "safe_reference_g_per_kg": 1.25,
+            "safe_mixed_diet_g_per_kg": None,
+        },
+        0.75: {
+            "avg_weight_kg": 7.93,
+            "avg_requirement_g_per_kg": 1.12,
+            "safe_reference_g_per_kg": 1.31,
+            "safe_mixed_diet_g_per_kg": 1.76,
+        },
+        1: {
+            "avg_weight_kg": 8.82,
+            "avg_requirement_g_per_kg": 1.12,
+            "safe_reference_g_per_kg": 1.31,
+            "safe_mixed_diet_g_per_kg": 1.76,
+        },
+        2: {
+            "avg_weight_kg": 10.55,
+            "avg_requirement_g_per_kg": 0.95,
+            "safe_reference_g_per_kg": 1.14,
+            "safe_mixed_diet_g_per_kg": 1.54,
+        },
+        3: {
+            "avg_weight_kg": 13.0,
+            "avg_requirement_g_per_kg": 0.79,
+            "safe_reference_g_per_kg": 0.97,
+            "safe_mixed_diet_g_per_kg": 1.31,
+        },
+        4: {
+            "avg_weight_kg": 15.15,
+            "avg_requirement_g_per_kg": 0.73,
+            "safe_reference_g_per_kg": 0.90,
+            "safe_mixed_diet_g_per_kg": 1.21,
+        },
+        5: {
+            "avg_weight_kg": 17.5,
+            "avg_requirement_g_per_kg": 0.69,
+            "safe_reference_g_per_kg": 0.86,
+            "safe_mixed_diet_g_per_kg": 1.16,
+        },
+    },
+
+    "men": {
+        6: {
+            "avg_weight_kg": 18.26,
+            "avg_requirement_g_per_kg": 0.69,
+            "safe_reference_g_per_kg": 0.85,
+            "safe_mixed_diet_g_per_kg": 1.14,
+        },
+        7: {
+            "avg_weight_kg": 20.36,
+            "avg_requirement_g_per_kg": 0.72,
+            "safe_reference_g_per_kg": 0.89,
+            "safe_mixed_diet_g_per_kg": 1.20,
+        },
+        8: {
+            "avg_weight_kg": 22.58,
+            "avg_requirement_g_per_kg": 0.74,
+            "safe_reference_g_per_kg": 0.91,
+            "safe_mixed_diet_g_per_kg": 1.23,
+        },
+        9: {
+            "avg_weight_kg": 25.01,
+            "avg_requirement_g_per_kg": 0.75,
+            "safe_reference_g_per_kg": 0.92,
+            "safe_mixed_diet_g_per_kg": 1.24,
+        },
+        10: {
+            "avg_weight_kg": 27.57,
+            "avg_requirement_g_per_kg": 0.75,
+            "safe_reference_g_per_kg": 0.92,
+            "safe_mixed_diet_g_per_kg": 1.24,
+        },
+        12: {
+            "avg_weight_kg": 32,
+            "avg_requirement_g_per_kg": 0.75,
+            "safe_reference_g_per_kg": 0.91,
+            "safe_mixed_diet_g_per_kg": 1.23,
+        },
+        14: {
+            "avg_weight_kg": 41,
+            "avg_requirement_g_per_kg": 0.74,
+            "safe_reference_g_per_kg": 0.90,
+            "safe_mixed_diet_g_per_kg": 1.21,
+        },
+        16: {
+            "avg_weight_kg": 53,
+            "avg_requirement_g_per_kg": 0.72,
+            "safe_reference_g_per_kg": 0.89,
+            "safe_mixed_diet_g_per_kg": 1.19,
+        },
+        18: {
+            "avg_weight_kg": 61,
+            "avg_requirement_g_per_kg": 0.71,
+            "safe_reference_g_per_kg": 0.87,
+            "safe_mixed_diet_g_per_kg": 1.16,
+        },
+        float("inf"): {
+            "avg_weight_kg": 64,
+            "avg_requirement_g_per_kg": 0.66,
+            "safe_reference_g_per_kg": 0.83,
+            "safe_mixed_diet_g_per_kg": 1.12,
+        },
+    },
+
+    "women": {
+        6: {
+            "avg_weight_kg": 17.69,
+            "avg_requirement_g_per_kg": 0.69,
+            "safe_reference_g_per_kg": 0.85,
+            "safe_mixed_diet_g_per_kg": 1.14,
+        },
+        7: {
+            "avg_weight_kg": 19.67,
+            "avg_requirement_g_per_kg": 0.72,
+            "safe_reference_g_per_kg": 0.89,
+            "safe_mixed_diet_g_per_kg": 1.20,
+        },
+        8: {
+            "avg_weight_kg": 21.87,
+            "avg_requirement_g_per_kg": 0.74,
+            "safe_reference_g_per_kg": 0.91,
+            "safe_mixed_diet_g_per_kg": 1.23,
+        },
+        9: {
+            "avg_weight_kg": 24.57,
+            "avg_requirement_g_per_kg": 0.75,
+            "safe_reference_g_per_kg": 0.92,
+            "safe_mixed_diet_g_per_kg": 1.24,
+        },
+        10: {
+            "avg_weight_kg": 27.56,
+            "avg_requirement_g_per_kg": 0.75,
+            "safe_reference_g_per_kg": 0.92,
+            "safe_mixed_diet_g_per_kg": 1.24,
+        },
+        12: {
+            "avg_weight_kg": 33,
+            "avg_requirement_g_per_kg": 0.74,
+            "safe_reference_g_per_kg": 0.91,
+            "safe_mixed_diet_g_per_kg": 1.22,
+        },
+        14: {
+            "avg_weight_kg": 42,
+            "avg_requirement_g_per_kg": 0.72,
+            "safe_reference_g_per_kg": 0.89,
+            "safe_mixed_diet_g_per_kg": 1.19,
+        },
+        16: {
+            "avg_weight_kg": 49,
+            "avg_requirement_g_per_kg": 0.70,
+            "safe_reference_g_per_kg": 0.86,
+            "safe_mixed_diet_g_per_kg": 1.16,
+        },
+        18: {
+            "avg_weight_kg": 52,
+            "avg_requirement_g_per_kg": 0.68,
+            "safe_reference_g_per_kg": 0.84,
+            "safe_mixed_diet_g_per_kg": 1.12,
+        },
+    },
+}
 def get_tmb(gender: str, age: float):
     equations = TMB[gender]
 
@@ -133,7 +306,18 @@ def evaluate_requirements(p: Person) -> dict:
 
     ree = tmb * p.naf_index if p.naf_index is not None else tmb
 
-    print(ree)
+    if p.is_pregnant:
+        if p.pregnancy_month > 3: # En el primer tremestre no cambia 
+            # FAO/WHO/UNU recommendation:
+            # trimester 1: no dietary increment
+            # trimester 2: +360 kcal/day
+            # trimester 3: +475 kcal/day
+            ree += 360 if p.pregnancy_month <= 6 else 475 # 360 para segundo trimestre; 475 para tercer trimeste 
+
+
+    if p.in_lactancy: 
+        ree += 505 if p.has_adequate_maternal_energy_stores else 675
+
     return {
         "tmb": tmb
     }
@@ -141,5 +325,5 @@ def evaluate_requirements(p: Person) -> dict:
 
 if __name__ == '__main__':
     # Posibles NAF = low, moderate, intense
-    p = Person(25, 'men', 81, 'low', 1.70)
+    p = Person(25, 'women', 81, 'low', 1.63, True, 5, True, True)
     evaluate_requirements(p)
