@@ -701,6 +701,139 @@ def percent_energy_to_fat_grams(energy: float, percent: float | None) -> float |
 
     return (energy * percent / FAT_KCAL_PER_GRAM)
 
+VITAMIN_A_REQUIREMENTS = {
+    "all": {
+        0.5: {
+            "rpe": None,
+            "rdd": None,
+            "ai": 375,
+        },
+        1: {
+            "rpe": None,
+            "rdd": None,
+            "ai": 450,
+        },
+        4: {
+            "rpe": 210,
+            "rdd": 300,
+            "ai": None,
+        },
+        7: {
+            "rpe": 250,
+            "rdd": 350,
+            "ai": None,
+        },
+        10: {
+            "rpe": 300,
+            "rdd": 450,
+            "ai": None,
+        },
+    },
+
+    "men": {
+        12: {
+            "rpe": 400,
+            "rdd": 600,
+            "ai": None,
+        },
+        14: {
+            "rpe": 500,
+            "rdd": 700,
+            "ai": None,
+        },
+        16: {
+            "rpe": 500,
+            "rdd": 700,
+            "ai": None,
+        },
+        18: {
+            "rpe": 525,
+            "rdd": 750,
+            "ai": None,
+        },
+        float("inf"): {
+            "rpe": 525,
+            "rdd": 750,
+            "ai": None,
+        },
+    },
+
+    "women": {
+        12: {
+            "rpe": 350,
+            "rdd": 500,
+            "ai": None,
+        },
+        14: {
+            "rpe": 400,
+            "rdd": 600,
+            "ai": None,
+        },
+        16: {
+            "rpe": 450,
+            "rdd": 650,
+            "ai": None,
+        },
+        18: {
+            "rpe": 450,
+            "rdd": 650,
+            "ai": None,
+        },
+        float("inf"): {
+            "rpe": 450,
+            "rdd": 650,
+            "ai": None,
+        },
+    },
+}
+
+VITAMIN_A_UL = {
+    4: 600,
+    9: 900,
+    14: 1700,
+    19: 2800,
+    float("inf"): 3000,
+}
+VITAMIN_A_PREGNANCY = {
+    "rpe": 500,
+    "rdd": 700,
+    "ai": None,
+}
+
+VITAMIN_A_LACTATION = {
+    "rpe": 825,
+    "rdd": 1000,
+    "ai": None,
+}
+
+
+def get_vitamin_a_requirement(p: Persona) -> dict:
+
+    if p.esta_en_lactancia:
+        return VITAMIN_A_LACTATION
+
+    if p.esta_embarazada:
+        return VITAMIN_A_PREGNANCY
+
+    if p.edad < 10:
+        requirements = VITAMIN_A_REQUIREMENTS["all"]
+    else:
+        requirements = VITAMIN_A_REQUIREMENTS[p.sexo]
+
+    for max_age, requirement in requirements.items():
+        if p.edad < max_age:
+            return requirement
+
+    raise ValueError(f"No se encontró requerimiento de vitamina A para edad {p.edad} y sexo {p.sexo}")
+
+def get_vitamin_a_ul(age: float) -> float:
+
+    for max_age, maximum in VITAMIN_A_UL.items():
+        if age < max_age:
+            return maximum
+
+    raise ValueError(f"No se encontró ingesta máxima tolerable de vitamina A para edad {age}")
+
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     weight_evaluation = evaluacion_peso(p)
@@ -810,7 +943,20 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     polyunsaturated_min = percent_energy_to_fat_grams(ree, fat_requirement["polyunsaturated_min_percent"])
     polyunsaturated_max = percent_energy_to_fat_grams(ree, fat_requirement["polyunsaturated_max_percent"])
     cholesterol_max = fat_requirement["cholesterol_max_mg"]
+    """
+    Vitamin A
+    """
 
+    vitamin_a_requirement = get_vitamin_a_requirement(p)
+
+    vitamin_a_ul = get_vitamin_a_ul(p.edad)
+
+    if vitamin_a_requirement["rdd"] is not None:
+        vitamin_a_minimum = vitamin_a_requirement["rdd"]
+        vitamin_a_reference_type = "rdd"
+    else:
+        vitamin_a_minimum = vitamin_a_requirement["ai"]
+        vitamin_a_reference_type = "ingesta_adecuada"
     return {
         "energy":{
             "ree": ree,
@@ -873,6 +1019,19 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
                 "unit": "mg",
             },
         },
+        "vitamin_a": {
+            "rpe": vitamin_a_requirement["rpe"],
+            "rdd": vitamin_a_requirement["rdd"],
+            "ai": vitamin_a_requirement["ai"],
+
+            "effective_minimum": vitamin_a_minimum,
+            "reference_type": vitamin_a_reference_type,
+
+            "maximum": vitamin_a_ul,
+
+            "unit": "ug_ER",
+        },
+        
     }
 
 
