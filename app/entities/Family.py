@@ -1,7 +1,7 @@
 from collections import List, Tuple
-from .Person import Person
+from .Person import Persona
 
 
 class Family: 
-    members: List[Tuple[str, Person]]
+    members: List[Tuple[str, Persona]]
     

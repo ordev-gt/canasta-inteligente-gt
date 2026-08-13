@@ -1,62 +1,69 @@
 
-class Person: 
-    age: int # years
-    gender: str
-    weight: float
-    height: float = None
+class Persona: 
+    edad: int # years
+    edad_meses: int
+    sexo: str
+    peso: float
+    altura: float = None
     naf: str # liviana, moderada, intensa
-    naf_index: float = None
-    is_pregnant: bool
-    pregnancy_month:int 
-    in_lactancy: bool
-    has_postpregnancy_fat: bool
+    naf_indice: float = None
+    esta_embarazada: bool
+    mes_de_embarazo:int 
+    reservas_de_energia_maternales: bool
+    esta_en_lactancia: bool
+    peso_preembarazo: float | None
 
-    def __init__(self, age, gender, weight, naf=None, height=None, 
-                 is_pregnant=False, pregnancy_month=None, has_postpregnancy_fat=False,
-                  in_lactancy=False ):
+    def __init__(self, edad, sexo, peso, naf=None, altura=None, 
+                 esta_embarazada=False, mes_de_embarazo=None, reservas_de_energia_maternales=False,
+                  esta_en_lactancia=False, peso_preembarazo: float = None):
 
-        if not gender in ['men', 'women']: 
+        if not sexo in ['men', 'women']: 
             raise ValueError('Gender must be either men or women ')
 
-        if gender=='men': 
-            if is_pregnant or in_lactancy: 
+        if edad < 0:
+            raise ValueError("Edad must be greater than 0")
+
+        if sexo=='men': 
+            if esta_embarazada or esta_en_lactancia: 
                 raise ValueError('Cannot instanciate men pregnant or in lactancy.')
 
         else:
-            if is_pregnant:
-                if not pregnancy_month is None:
-                    if not (pregnancy_month < 10 and  pregnancy_month >= 0 ):
+            if esta_embarazada:
+                if not mes_de_embarazo is None:
+                    if not (mes_de_embarazo < 10 and  mes_de_embarazo >= 0 ):
                         raise ValueError(f'Pregnancy month not a valid value, must be a number between 0-9 ()')
                 else: 
                     raise ValueError('Must define pregnancy in case women is pregnant') 
 
 
         
-        self.age = age
-        self.gender = gender
-        self.weight = weight
+        self.edad = edad
+        self.edad_meses = round(edad * 12) # Aproximacion, preguntar si es conveniente indicar que se ingrese la edad exacta con meses. Ingresar fecha de nacimiento?
+        self.sexo = sexo
+        self.peso = peso
         self.naf = naf
-        self.height = height
-        self.is_pregnant = is_pregnant
-        self.pregnancy_month = pregnancy_month
-        self.in_lactancy = in_lactancy
-        self.has_postpregnancy_fat = has_postpregnancy_fat
+        self.altura = altura
+        self.esta_embarazada = esta_embarazada
+        self.mes_de_embarazo = mes_de_embarazo
+        self.esta_en_lactancia = esta_en_lactancia
+        self.reservas_de_energia_maternales = reservas_de_energia_maternales
+        self.peso_preembarazo = peso_preembarazo
 
         self.calculate_naf_index()
 
 
     def calculate_naf_index(self): 
         if self.naf is None: 
-            self.naf_index = None
+            self.naf_indice = None
             return 
 
         if self.naf == 'low': 
-            self.naf_index = 1.55
+            self.naf_indice = 1.55
             return 
         
-        if self.gender == 'women': 
-            self.naf_index = 1.75 if self.naf == 'moderate' else 2.1 
+        if self.sexo == 'women': 
+            self.naf_indice = 1.75 if self.naf == 'moderate' else 2.1 
             return
         # Hombre
-        self.naf_index = 1.85 if self.naf == 'moderate' else 2.2 
+        self.naf_indice = 1.85 if self.naf == 'moderate' else 2.2 
         return
