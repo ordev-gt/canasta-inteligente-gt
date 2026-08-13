@@ -617,8 +617,29 @@ def get_protein_requirement(gender: str, age: float) -> dict:
     raise ValueError(f"No se encontró requerimiento de proteína para edad {age} y sexo {gender}")
 
 
+CARBOHYDRATE_REQUIREMENTS = {
+    0.5: {
+        "type": "ingesta_adecuada",
+        "grams_per_day": 60,
+    },
+    1: {
+        "type": "ingesta_adecuada",
+        "grams_per_day": 95,
+    },
+    float("inf"): {
+        "type": "rpe",
+        "grams_per_day": 100,
+    },
+}
+def get_carbohydrate_requirement(age: float) -> dict:
+    for max_age, requirement in CARBOHYDRATE_REQUIREMENTS.items():
+        if age < max_age:
+            return requirement
 
-def evaluate_daily_requirements(p: Persona) -> dict:
+    raise ValueError(f"No se encontró requerimiento de carbohidratos para edad {age}")
+
+
+def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     weight_evaluation = evaluacion_peso(p)
 
@@ -628,11 +649,12 @@ def evaluate_daily_requirements(p: Persona) -> dict:
     tmb = tmb_formula(calculation_weight)
 
     # REE = Requerimiento Estimado de Energía (INCAP),
-    ree = tmb * p.naf_indice if p.naf_indice is not None else tmb\
+    
+    ree = tmb * p.naf_indice if p.edad > 10 and p.naf_indice is not None else tmb
 
 
     """
-    Energy
+    Energia
     """
 
     if p.esta_embarazada:
@@ -649,7 +671,7 @@ def evaluate_daily_requirements(p: Persona) -> dict:
 
 
     """
-    Protein
+    Proteina
     """
     protein_requirement = get_protein_requirement(p.sexo, p.edad)
 
@@ -668,210 +690,136 @@ def evaluate_daily_requirements(p: Persona) -> dict:
             lactation_protein = 26
         elif p.lactancy_month <= 12:
             lactation_protein = 18
+
+
+    """
+    Carbohydrates
+    """
+    CARBOHYDRATE_ENERGY_MIN = 0.45
+    CARBOHYDRATE_ENERGY_MAX = 0.65
+    CARBOHYDRATE_KCAL_PER_GRAM = 4
+
+    carbohydrate_requirement = get_carbohydrate_requirement(p.edad)
+    carbohydrate_minimum = carbohydrate_requirement["grams_per_day"]
+
+    if carbohydrate_requirement["type"] == "rpe":
+        if p.esta_embarazada:
+            carbohydrate_minimum += 33
+
+        if p.esta_en_lactancia:
+            carbohydrate_minimum += 60
+
+    if p.edad >= 1:
+        carbohydrate_energy_min = (ree * CARBOHYDRATE_ENERGY_MIN / CARBOHYDRATE_KCAL_PER_GRAM )
+
+        carbohydrate_energy_max = (ree * CARBOHYDRATE_ENERGY_MAX / CARBOHYDRATE_KCAL_PER_GRAM )
+
+        carbohydrate_effective_min = max(carbohydrate_minimum, carbohydrate_energy_min )
+
+    else:
+        carbohydrate_energy_min = None
+        carbohydrate_energy_max = None
+        carbohydrate_effective_min = carbohydrate_minimum
+
     return {
         "energy":{
             "ree": ree,
             "unit": "kcal"
         },
         "protein":{
-            'rpe': protein_requirement["rpe_g_per_kg"] * calculation_weight ,
+            'rpe': (protein_requirement["rpe_g_per_kg"] * calculation_weight)+pregnancy_protein+lactation_protein,
             'ree':{
-                'refence_diet': protein_requirement["rdd_reference_g_per_kg"] * calculation_weight,
-                'mixed': protein_requirement["rdd_mixed_diet_g_per_kg"] * calculation_weight if protein_requirement["rdd_mixed_diet_g_per_kg"] is not None else None
+                'refence_diet': (protein_requirement["rdd_reference_g_per_kg"] * calculation_weight)+pregnancy_protein+lactation_protein,
+                'mixed': (protein_requirement["rdd_mixed_diet_g_per_kg"] * calculation_weight)+pregnancy_protein+lactation_protein if protein_requirement["rdd_mixed_diet_g_per_kg"] is not None else None
             },
             "unit": "g"
 
-        }
+        },
+        "carbohydrates": {
+            "reference_type": carbohydrate_requirement["type"],
+
+            "reference_minimum": carbohydrate_minimum,
+
+            "energy_distribution": {
+                "minimum_percent": 45,
+                "maximum_percent": 65,
+                "minimum_grams": carbohydrate_energy_min,
+                "maximum_grams": carbohydrate_energy_max,
+            },
+
+            "effective_minimum": carbohydrate_effective_min,
+            "effective_maximum": carbohydrate_energy_max,
+
+            "unit": "g",
+        },
     }
 
 
 if __name__ == "__main__":
 
     personas_prueba = {
-
-        # ==========================================
         # 0 A 5 AÑOS
-        # ==========================================
+        "Niño <5 rango referencia": Persona(edad=0.1, sexo="men", peso=3.3, naf="low", altura=0.50),
+        "Niño <5 sobrepeso": Persona(edad=0.1, sexo="men", peso=4.2, naf="low", altura=0.50),
+        "Niña <5 rango referencia": Persona(edad=0.1, sexo="women", peso=3.35, naf="low", altura=0.50),
+        "Niña <5 sobrepeso": Persona(edad=0.1, sexo="women", peso=4.2, naf="low", altura=0.50),
 
-        "Niño <5 rango referencia": Persona(
-            0.1,
-            "men",
-            3.3,
-            "low",
-            0.50
-        ),
-
-        "Niño <5 sobrepeso": Persona(
-            0.1,
-            "men",
-            4.2,
-            "low",
-            0.50
-        ),
-
-        "Niña <5 rango referencia": Persona(
-            0.1,
-            "women",
-            3.35,
-            "low",
-            0.50
-        ),
-
-        "Niña <5 sobrepeso": Persona(
-            0.1,
-            "women",
-            4.2,
-            "low",
-            0.50
-        ),
-
-
-        # ==========================================
         # 5 A 19 AÑOS
-        # ==========================================
+        "Niño 10 años rango referencia": Persona(edad=10, sexo="men", peso=32, naf="low", altura=1.40),
+        "Niño 10 años sobrepeso": Persona(edad=10, sexo="men", peso=45, naf="low", altura=1.40),
+        "Niña 12 años rango referencia": Persona(edad=12.1, sexo="women", peso=41, naf="low", altura=1.50),
+        "Niña 12 años sobrepeso": Persona(edad=12, sexo="women", peso=55, naf="low", altura=1.50),
 
-        # 10 años, 1.40 m
-        "Niño 10 años rango referencia": Persona(
-            10,
-            "men",
-            32,
-            "low",
-            1.40
-        ),
-
-        "Niño 10 años sobrepeso": Persona(
-            10,
-            "men",
-            45,
-            "low",
-            1.40
-        ),
-
-        # 12 años, 1.50 m
-        "Niña 12 años rango referencia": Persona(
-            12,
-            "women",
-            40,
-            "low",
-            1.50
-        ),
-
-        "Niña 12 años sobrepeso": Persona(
-            12,
-            "women",
-            55,
-            "low",
-            1.50
-        ),
-
-
-        # ==========================================
         # ADULTOS
-        # ==========================================
+        "Hombre adulto normal": Persona(edad=25, sexo="men", peso=65, naf="low", altura=1.70),
+        "Hombre adulto sobrepeso": Persona(edad=25, sexo="men", peso=85, naf="low", altura=1.70),
+        "Mujer adulta normal": Persona(edad=25, sexo="women", peso=60, naf="low", altura=1.65),
+        "Mujer adulta sobrepeso": Persona(edad=25, sexo="women", peso=75, naf="low", altura=1.65),
 
-        "Hombre adulto normal": Persona(
-            25,
-            "men",
-            65,
-            "low",
-            1.70
-        ),
+        # EMBARAZO
+        "Embarazada peso pregestacional normal": Persona(edad=28, sexo="women", peso=70, naf="low", altura=1.65, esta_embarazada=True, mes_de_embarazo=5, peso_preembarazo=62),
+        "Embarazada con sobrepeso pregestacional": Persona(edad=30, sexo="women", peso=85, naf="low", altura=1.65, esta_embarazada=True, mes_de_embarazo=8, peso_preembarazo=78),
 
-        "Hombre adulto sobrepeso": Persona(
-            25,
-            "men",
-            85,
-            "low",
-            1.70
-        ),
-
-        "Mujer adulta normal": Persona(
-            25,
-            "women",
-            60,
-            "low",
-            1.65
-        ),
-
-        "Mujer adulta sobrepeso": Persona(
-            25,
-            "women",
-            75,
-            "low",
-            1.65
-        ),
+        # LACTANCIA
+        "Mujer lactante con reservas": Persona(edad=28, sexo="women", peso=64, naf="low", altura=1.65, esta_en_lactancia=True, reservas_de_energia_maternales=True),
+        "Mujer lactante sin reservas": Persona(edad=28, sexo="women", peso=58, naf="low", altura=1.65, esta_en_lactancia=True, reservas_de_energia_maternales=False),
     }
-
 
     for nombre, persona in personas_prueba.items():
 
+        print("\n" + "=" * 80)
+        print(nombre)
+        print("=" * 80)
+
         try:
-            resultado = evaluacion_peso(persona)
+            evaluacion_peso_resultado = evaluacion_peso(persona)
+            requerimientos = evaluacion_de_requerimientos_diarios(persona)
 
-            print("\n" + "=" * 70)
-            print(nombre)
-            print("=" * 70)
+            print(f"Edad: {persona.edad} años ({persona.edad_meses} meses)")
+            print(f"Sexo: {persona.sexo}")
+            print(f"Peso real: {persona.peso:.2f} kg")
+            print(f"Altura: {persona.altura:.2f} m")
+            print(f"NAF: {persona.naf}")
+            print()
 
-            print(
-                f"Edad: "
-                f"{persona.edad} años "
-                f"({persona.edad_meses} meses)"
-            )
+            print("EVALUACIÓN DEL PESO")
+            print(f"Estado: {evaluacion_peso_resultado['estado_de_indicador']}")
+            print(f"Peso para cálculos: {evaluacion_peso_resultado['peso_para_calculos']:.2f} kg")
+            print(f"Fuente de peso: {evaluacion_peso_resultado['fuente_de_peso']}")
+            print(f"Requiere intervención profesional: {evaluacion_peso_resultado['requiere_intervencion_profesional']}")
+            print()
 
-            print(
-                f"Sexo: {persona.sexo}"
-            )
+            print("REQUERIMIENTOS DIARIOS")
+            print(f"Energía: {requerimientos['energy']['ree']:.2f} kcal/día")
+            print(f"Proteína RPE: {requerimientos['protein']['rpe']:.2f} g/día")
+            print(f"Proteína dieta de referencia: {requerimientos['protein']['ree']['refence_diet']:.2f} g/día")
 
-            print(
-                f"Peso real: "
-                f"{resultado['peso_real']:.2f} kg"
-            )
+            proteina_mixta = requerimientos["protein"]["ree"]["mixed"]
 
-            print(
-                f"Peso para cálculos: "
-                f"{resultado['peso_para_calculos']:.2f} kg"
-            )
-
-            print(
-                f"Indicador: "
-                f"{resultado['indicador']}"
-            )
-
-            valor = resultado[
-                "valor_de_indicador"
-            ]
-
-            if valor is not None:
-                print(
-                    f"Valor indicador: "
-                    f"{valor:.2f}"
-                )
-
-            print(
-                f"Estado: "
-                f"{resultado['estado_de_indicador']}"
-            )
-
-            print(
-                f"Usa peso real: "
-                f"{resultado['usa_peso_real']}"
-            )
-
-            print(
-                f"Fuente: "
-                f"{resultado['fuente_de_peso']}"
-            )
-
-            print(
-                "Requiere intervención profesional: "
-                f"{resultado['requiere_intervencion_profesional']}"
-            )
+            if proteina_mixta is not None:
+                print(f"Proteína dieta mixta: {proteina_mixta:.2f} g/día")
+            else:
+                print("Proteína dieta mixta: No disponible")
 
         except Exception as e:
-
-            print("\n" + "=" * 70)
-            print(nombre)
-            print("=" * 70)
-            print(
-                f"ERROR: {e}"
-            )
+            print(f"ERROR: {e}")
