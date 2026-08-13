@@ -592,59 +592,60 @@ PROTEIN_REQUIREMENTS = {
 }
 
 def get_fat_requirements(age: float) -> dict:
+
+    # 0 a <6 meses
     if age < 0.5:
         return {
             "total_min_percent": 0.40,
             "total_max_percent": 0.60,
+
             "saturated_max_percent": None,
+
             "polyunsaturated_min_percent": None,
             "polyunsaturated_max_percent": None,
-            "linoleic_min_percent": None,
-            "linoleic_max_percent": None,
-            "ala_min_percent": 0.002,
-            "ala_max_percent": 0.003,
-            "trans_max_percent": None,
+
+            "cholesterol_max_mg": None,
         }
 
+    # 6 meses a <2 años
     if age < 2:
         return {
             "total_min_percent": 0.30,
             "total_max_percent": 0.35,
+
             "saturated_max_percent": None,
+
             "polyunsaturated_min_percent": None,
             "polyunsaturated_max_percent": 0.15,
-            "linoleic_min_percent": 0.03,
-            "linoleic_max_percent": 0.045,
-            "ala_min_percent": 0.004,
-            "ala_max_percent": 0.006,
-            "trans_max_percent": 0.01,
+
+            "cholesterol_max_mg": None,
         }
 
+    # 2 a <19 años
     if age < 19:
         return {
             "total_min_percent": 0.25,
             "total_max_percent": 0.35,
+
             "saturated_max_percent": 0.08,
+
             "polyunsaturated_min_percent": None,
             "polyunsaturated_max_percent": 0.11,
-            "linoleic_min_percent": None,
-            "linoleic_max_percent": None,
-            "ala_min_percent": None,
-            "ala_max_percent": None,
-            "trans_max_percent": 0.01,
+
+            "cholesterol_max_mg": 300,
         }
 
+    # Adultos
     return {
         "total_min_percent": 0.20,
         "total_max_percent": 0.30,
+
         "saturated_max_percent": 0.10,
+
         "polyunsaturated_min_percent": 0.06,
         "polyunsaturated_max_percent": 0.11,
-        "linoleic_min_percent": 0.025,
-        "linoleic_max_percent": 0.09,
-        "ala_min_percent": 0.005,
-        "ala_max_percent": 0.02,
-        "trans_max_percent": 0.01,
+
+        "cholesterol_max_mg": 300,
     }
 
 def get_tmb(gender: str, age: float):
@@ -797,17 +798,18 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Lipids
     """
 
+    """
+    Lipids
+    """
+
     fat_requirement = get_fat_requirements(p.edad)
-    fat_total_min = (ree * fat_requirement["total_min_percent"] / FAT_KCAL_PER_GRAM)
-    fat_total_max = (ree * fat_requirement["total_max_percent"] / FAT_KCAL_PER_GRAM)
+
+    fat_total_min = percent_energy_to_fat_grams(ree, fat_requirement["total_min_percent"])
+    fat_total_max = percent_energy_to_fat_grams(ree, fat_requirement["total_max_percent"])
     saturated_max = percent_energy_to_fat_grams(ree, fat_requirement["saturated_max_percent"])
     polyunsaturated_min = percent_energy_to_fat_grams(ree, fat_requirement["polyunsaturated_min_percent"])
     polyunsaturated_max = percent_energy_to_fat_grams(ree, fat_requirement["polyunsaturated_max_percent"])
-    linoleic_min = percent_energy_to_fat_grams(ree, fat_requirement["linoleic_min_percent"])
-    linoleic_max = percent_energy_to_fat_grams(ree, fat_requirement["linoleic_max_percent"])
-    ala_min = percent_energy_to_fat_grams(ree, fat_requirement["ala_min_percent"])
-    ala_max = percent_energy_to_fat_grams(ree, fat_requirement["ala_max_percent"])
-    trans_max = percent_energy_to_fat_grams(ree, fat_requirement["trans_max_percent"])
+    cholesterol_max = fat_requirement["cholesterol_max_mg"]
 
     return {
         "energy":{
@@ -852,32 +854,24 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "total": {
                 "minimum": fat_total_min,
                 "maximum": fat_total_max,
+                "unit": "g",
             },
 
             "saturated": {
                 "maximum": saturated_max,
+                "unit": "g",
             },
 
             "polyunsaturated": {
                 "minimum": polyunsaturated_min,
                 "maximum": polyunsaturated_max,
+                "unit": "g",
             },
 
-            "linoleic": {
-                "minimum": linoleic_min,
-                "maximum": linoleic_max,
+            "cholesterol": {
+                "maximum": cholesterol_max,
+                "unit": "mg",
             },
-
-            "ala": {
-                "minimum": ala_min,
-                "maximum": ala_max,
-            },
-
-            "trans": {
-                "maximum": trans_max,
-            },
-
-            "unit": "g",
         },
     }
 
