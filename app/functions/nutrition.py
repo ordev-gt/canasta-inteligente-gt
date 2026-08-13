@@ -697,10 +697,12 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     """
     CARBOHYDRATE_ENERGY_MIN = 0.45
     CARBOHYDRATE_ENERGY_MAX = 0.65
+    REFINED_SUGAR_ENERGY_MAX = 0.10
     CARBOHYDRATE_KCAL_PER_GRAM = 4
 
     carbohydrate_requirement = get_carbohydrate_requirement(p.edad)
     carbohydrate_minimum = carbohydrate_requirement["grams_per_day"]
+    refined_sugar_max = None
 
     if carbohydrate_requirement["type"] == "rpe":
         if p.esta_embarazada:
@@ -711,7 +713,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     if p.edad >= 1:
         carbohydrate_energy_min = (ree * CARBOHYDRATE_ENERGY_MIN / CARBOHYDRATE_KCAL_PER_GRAM )
-
+        refined_sugar_max = (ree * REFINED_SUGAR_ENERGY_MAX / CARBOHYDRATE_KCAL_PER_GRAM)
         carbohydrate_energy_max = (ree * CARBOHYDRATE_ENERGY_MAX / CARBOHYDRATE_KCAL_PER_GRAM )
 
         carbohydrate_effective_min = max(carbohydrate_minimum, carbohydrate_energy_min )
@@ -720,6 +722,16 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
         carbohydrate_energy_min = None
         carbohydrate_energy_max = None
         carbohydrate_effective_min = carbohydrate_minimum
+
+    """
+    Fibra Dietetica
+    """
+    FIBER_GRAMS_PER_1000_KCAL = 12
+    fiber_requirement = None
+
+    if p.edad >= 1:
+        fiber_requirement = (ree / 1000 * FIBER_GRAMS_PER_1000_KCAL)
+
 
     return {
         "energy":{
@@ -749,7 +761,10 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
             "effective_minimum": carbohydrate_effective_min,
             "effective_maximum": carbohydrate_energy_max,
-
+            "refined_sugars": {
+                "maximum_percent_energy": 10,
+                "maximum_grams": refined_sugar_max,
+            },
             "unit": "g",
         },
     }
