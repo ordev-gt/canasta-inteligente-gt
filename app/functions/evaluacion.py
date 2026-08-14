@@ -13,7 +13,8 @@ from .requerimientos import (
     IA_VITAMINA_D, VITAMINA_D_EMBARAZO, VITAMINA_D_LACTANCIA, 
     REQUERIMIENTOS_VITAMINA_E, VITAMINA_E_EMBARAZO, VITAMINA_E_LACTANCIA, 
     REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
-    REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA
+    REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
+    REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA, REQUERIMIENTOS_RIBOFLAVINA
     
     )
 
@@ -514,7 +515,35 @@ class Tiamina:
                             new_requirment[idr] = value + requerimiento_adicional
                     new_requirment['unidad'] = 'mg'
                     return new_requirment
-        
+                
+        raise ValueError(f"No se encontró un requerimiento apropiado de tiamina para el individuo")
+
+class Riboflavina:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        requerimiento_adicional:int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA if p.esta_en_lactancia else 0      
+
+        requerimientos = REQUERIMIENTOS_RIBOFLAVINA["todos"] if p.edad < 10 else REQUERIMIENTOS_RIBOFLAVINA[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                if requerimiento_adicional == 0:
+                    requerimiento['unidad'] = 'mg'
+                    return requerimiento
+                else:
+                    new_requirment = {}
+                    for idr, value in requerimiento.items():
+                        if value is None: 
+                            new_requirment[idr] = value
+                        else: 
+                            new_requirment[idr] = value + requerimiento_adicional
+                    new_requirment['unidad'] = 'mg'
+                    return new_requirment
+
+        raise ValueError(f"No se encontró un requerimiento apropiado de Riboflavina para el individuo")
+
 class VitaminasComplejoB:
     @staticmethod
     def obtener_requerimiento_vitaminas_b(p: Persona) -> dict:
@@ -800,7 +829,10 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Tiamina
     """
     requerimiento_tiamina = Tiamina.obtener_requerimiento(p)
-  
+    """
+    Riboflavina
+    """
+    requerimiento_riboflavina = Riboflavina.obtener_requerimiento(p)
 
     """
     Vitaminas del complejo B
@@ -910,14 +942,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             },
             },
             "tiamina": requerimiento_tiamina,
-
-            "riboflavina": {
-                "rpe": requerimiento_vitaminas_b["rpe"]["riboflavina"],
-                "rdd": requerimiento_vitaminas_b["rdd"]["riboflavina"],
-                "minimo_efectivo": requerimiento_vitaminas_b["rdd"]["riboflavina"],
-                "idr": "rdd",
-                "unidad": "mg",
-            },
+            "riboflavina": requerimiento_riboflavina,
 
             "niacina": {
                 "rpe": requerimiento_vitaminas_b["rpe"]["niacina"],

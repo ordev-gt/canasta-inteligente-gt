@@ -443,12 +443,8 @@ VITAMINA_A_LACTANCIA = {
     "ia": None,
 }
 
-
-
 """
-####
-Vitamina Complejo B
-####
+Tiamina
 """
 REQUERIMIENTOS_TIAMINA = {
     "todos": {
@@ -511,11 +507,6 @@ REQUERIMIENTOS_TIAMINA = {
             "rpe": 0.8, 
             "rdd": 0.9
         },
-        16: {
-            "ia": None, 
-            "rpe": 0.9, 
-            "rdd": 1
-        },
         float("inf"): {
             "ia": None, 
             "rpe": 0.9, 
@@ -526,7 +517,84 @@ REQUERIMIENTOS_TIAMINA = {
 
 REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS = 0.3
 REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA =  0.16
- 
+
+
+"""
+Riboflavina
+"""
+
+REQUERIMIENTOS_RIBOFLAVINA = {
+    "todos": {
+        0.5: {
+            "ia": 0.3,
+            "rpe": None, 
+            "rdd": None
+        },
+        1: {
+            "ia": 0.4, 
+            "rpe": None, 
+            "rdd": None
+        },
+        7: {
+            "ia": None, 
+            "rpe": 0.4, 
+            "rdd": 0.5 
+        },
+        10: {
+            "ia": None, 
+            "rpe": 0.5, 
+            "rdd": 0.6 
+        },
+    },
+    "hombre":{
+        12: {
+            "ia": None, 
+            "rpe": 0.7, 
+            "rdd": 0.8 
+        },
+        14: {
+            "ia": None, 
+            "rpe": 0.8, 
+            "rdd": 1
+        },
+        16: {
+            "ia": None, 
+            "rpe": 1, 
+            "rdd": 1.2
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 1.1, 
+            "rdd": 1.3
+        }
+    },
+    "mujer":{
+        12: {
+            "ia": None, 
+            "rpe": 0.7, 
+            "rdd": 0.8
+        },
+        14: {
+            "ia": None, 
+            "rpe": 0.8, 
+            "rdd": 0.9
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 0.9, 
+            "rdd": 1.1
+        },
+    }
+}
+
+REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS = 0.3
+REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA =  0.4
+
+"""
+####
+Vitamina Complejo B
+####
+"""
 REQUERIMIENTOS_VITAMINAS_B = {
     "todos": {
         0.5: {
