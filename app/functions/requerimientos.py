@@ -683,6 +683,99 @@ REQUERIMIENTOS_NIACINA = {
 REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS = 3
 REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA =  2.4
 
+
+"""
+Vitamina B6
+"""
+REQUERIMIENTOS_VITAMINAB6 = {
+    "todos": {
+        0.5: {
+            "ia": 0.1,
+            "rpe": None, 
+            "rdd": None
+        },
+        1: {
+            "ia": 0.3, 
+            "rpe": None, 
+            "rdd": None
+        },
+        4: {
+            "ia": None, 
+            "rpe": 0.4, 
+            "rdd": 0.5 
+        },
+        7: {
+            "ia": None, 
+            "rpe": 0.5, 
+            "rdd": 0.6 
+        },
+        10: {
+            "ia": None, 
+            "rpe": 0.6, 
+            "rdd": 0.7
+        },
+    },
+    "hombre":{
+        12: {
+            "ia": None, 
+            "rpe": 0.7, 
+            "rdd": 0.8 
+        },
+        14: {
+            "ia": None, 
+            "rpe": 0.8, 
+            "rdd": 1
+        },
+        16: {
+            "ia": None, 
+            "rpe": 1, 
+            "rdd": 1.2
+        },
+        65: {
+            "ia": None, 
+            "rpe": 1.1, 
+            "rdd": 1.3
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 1.4, 
+            "rdd": 1.7
+        }
+    },
+    "mujer":{
+        12: {
+            "ia": None, 
+            "rpe": 0.8, 
+            "rdd": 1
+        },
+        14: {
+            "ia": None, 
+            "rpe": 1, 
+            "rdd": 1.2
+        },
+        65: {
+            "ia": None, 
+            "rpe": 1.1, 
+            "rdd": 1.3
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 1.3, 
+            "rdd": 1.6
+        },
+    } 
+}
+
+REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS = 0.5
+REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA =  0.6
+
+IMT_VITAMINA_B6 = {
+    3: 30,
+    8: 40, 
+    13: 60,
+    18: 80, 
+    float('inf'): 100
+}
 """
 ####
 Vitamina Complejo B

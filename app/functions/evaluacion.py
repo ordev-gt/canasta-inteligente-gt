@@ -15,7 +15,8 @@ from .requerimientos import (
     REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
     REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA, REQUERIMIENTOS_RIBOFLAVINA,
-    REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA
+    REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA,
+    REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA, REQUERIMIENTOS_VITAMINAB6, IMT_VITAMINA_B6
     
     )
 
@@ -570,6 +571,35 @@ class Niacina:
 
         raise ValueError(f"No se encontró un requerimiento apropiado de Niacina para el individuo")
 
+
+class VitaminaB6:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        requerimiento_adicional: int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA if p.esta_en_lactancia else 0      
+        requerimientos = REQUERIMIENTOS_VITAMINAB6["todos"] if p.edad < 10 else REQUERIMIENTOS_VITAMINAB6[p.sexo]
+        imt = [imt for edad_maxima, imt in IMT_VITAMINA_B6.items() if p.edad < edad_maxima][0]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                if requerimiento_adicional == 0:
+                    requerimiento['imt'] = imt
+                    requerimiento['unidad'] = 'mg'
+                    return requerimiento
+                else:
+                    new_requirment = {}
+                    for idr, value in requerimiento.items():
+                        if value is None: 
+                            new_requirment[idr] = value
+                        else: 
+                            new_requirment[idr] = value + requerimiento_adicional
+                    new_requirment['imt'] = imt
+                    new_requirment['unidad'] = 'mg'
+                    return new_requirment
+
+        raise ValueError(f"No se encontró un requerimiento apropiado de VitaminaB6 para el individuo")
+
 class VitaminasComplejoB:
     @staticmethod
     def obtener_requerimiento_vitaminas_b(p: Persona) -> dict:
@@ -863,7 +893,11 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Niacina
     """
     requerimiento_niacina = Niacina.obtener_requerimiento(p)
-
+    """
+    Vitamina B6
+    """
+    requerimiento_vitaminab6 = VitaminaB6.obtener_requerimiento(p)
+    
     """
     Vitaminas del complejo B
     """
@@ -961,7 +995,6 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "rpe": requerimiento_vitamina_a["rpe"],
             "rdd": requerimiento_vitamina_a["rdd"],
             "ia": requerimiento_vitamina_a["ia"],
-
             "minimo_efectivo": minimo_vitamina_a,
             "idr": tipo_referencia_vitamina_a,
             "unidad": "ug_EAR",
@@ -973,16 +1006,8 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             },
             "tiamina": requerimiento_tiamina,
             "riboflavina": requerimiento_riboflavina,
-
             "niacina": requerimiento_niacina,
-
-            "vitamina_b6": {
-                "rpe": requerimiento_vitaminas_b["rpe"]["vitamina_b6"],
-                "rdd": requerimiento_vitaminas_b["rdd"]["vitamina_b6"],
-                "minimo_efectivo": requerimiento_vitaminas_b["rdd"]["vitamina_b6"],
-                "idr": "rdd",
-                "unidad": "mg",
-            },
+            "vitamina_b6": requerimiento_vitaminab6,
 
             "folatos": {
                 "rpe": requerimiento_vitaminas_b["rpe"]["folatos"],
