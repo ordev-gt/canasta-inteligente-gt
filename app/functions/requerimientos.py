@@ -591,6 +591,99 @@ REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS = 0.3
 REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA =  0.4
 
 """
+Niacina
+
+Para infantes (menores de 1 año), el requerimiento es de niacina performada.  
+
+Equivalente de Niacina (EN)
+"""
+REQUERIMIENTOS_NIACINA = {
+    "todos": {
+        0.5: {
+            "ia": 2,
+            "rpe": None, 
+            "rdd": None
+        },
+        1: {
+            "ia": 4, 
+            "rpe": None, 
+            "rdd": None
+        },
+        4: {
+            "ia": None, 
+            "rpe": 4, 
+            "rdd": 6 
+        },
+        7: {
+            "ia": None, 
+            "rpe": 5, 
+            "rdd": 6 
+        },
+        10: {
+            "ia": None, 
+            "rpe": 6, 
+            "rdd": 8
+        },
+    },
+    "hombre":{
+        12: {
+            "ia": None, 
+            "rpe": 7, 
+            "rdd": 9 
+        },
+        14: {
+            "ia": None, 
+            "rpe": 9, 
+            "rdd": 11
+        },
+        16: {
+            "ia": None, 
+            "rpe": 10, 
+            "rdd": 14
+        },
+        18: {
+            "ia": None, 
+            "rpe": 12, 
+            "rdd": 15
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 12, 
+            "rdd": 16
+        }
+    },
+    "mujer":{
+        12: {
+            "ia": None, 
+            "rpe": 8, 
+            "rdd": 10
+        },
+        14: {
+            "ia": None, 
+            "rpe": 10, 
+            "rdd": 13
+        },
+        16: {
+            "ia": None, 
+            "rpe": 11, 
+            "rdd": 14
+        },
+        18: {
+            "ia": None, 
+            "rpe": 11, 
+            "rdd": 15
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 11, 
+            "rdd": 14
+        },
+    }
+}
+REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS = 3
+REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA =  2.4
+
+"""
 ####
 Vitamina Complejo B
 ####
