@@ -5,10 +5,15 @@ from .requerimientos import (
     TMB, REQUERIMIENTOS_PROTEINA,
     REQUERIMIENTOS_LIPIDOS, REQUERIMIENTOS_CARBOHIDRATOS, KCAL_POR_GRAMO_GRASA, CARBOHIDRATOS_ENERGIA_MIN, 
     CARBOHIDRATOS_ENERGIA_MAX, AZUCARES_REFINADOS_ENERGIA_MAX, KCAL_POR_GRAMO_CARBOHIDRATO,
-    VITAMINA_A_EMBARAZO, VITAMINA_A_LACTANCIA, REQUERIMIENTOS_VITAMINA_A, LIMITE_SUPERIOR_VITAMINA_A, 
+    VITAMINA_A_EMBARAZO, VITAMINA_A_LACTANCIA, REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
     VITAMINAS_B_EMBARAZO, VITAMINAS_B_LACTANCIA, REQUERIMIENTOS_VITAMINAS_B,
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_EMBARAZO, ACIDO_PANTOTENICO_LACTANCIA,
-    GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS
+    GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
+    VITAMINA_C_EMBARAZO, VITAMINA_C_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
+    IA_VITAMINA_D, VITAMINA_D_EMBARAZO, VITAMINA_D_LACTANCIA, 
+    REQUERIMIENTOS_VITAMINA_E, VITAMINA_E_EMBARAZO, VITAMINA_E_LACTANCIA, 
+    REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
+    REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA
     
     )
 
@@ -475,14 +480,41 @@ class VitaminaA:
         raise ValueError(f"No se encontró requerimiento de vitamina A para edad {p.edad} y sexo {p.sexo}")   
 
     @staticmethod
-    def obtener_limite_superior(age: float) -> float:
+    def obtener_imt(age: float) -> float:
+        """
+        Corresponde especificamente a la parte de la vitamina de A proveniente del Retinol. 
+        """
 
-        for edad_maxima, maximo in LIMITE_SUPERIOR_VITAMINA_A.items():
+        for edad_maxima, maximo in IMT_RETINOL.items():
             if age < edad_maxima:
                 return maximo
 
-        raise ValueError(f"No se encontró ingesta máxima tolerable de vitamina A para edad {age}")
+        raise ValueError(f"No se encontró ingesta máxima tolerable de retinol para edad {age}")
 
+class Tiamina:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        requerimiento_adicional:int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA if p.esta_en_lactancia else 0
+
+        requerimientos = REQUERIMIENTOS_TIAMINA["todos"] if p.edad < 10 else REQUERIMIENTOS_TIAMINA[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                if requerimiento_adicional == 0:
+                    requerimiento['unidad'] = 'mg'
+                    return requerimiento
+                else:
+                    new_requirment = {}
+                    for idr, value in requerimiento.items():
+                        if value is None: 
+                            new_requirment[idr] = value
+                        else: 
+                            new_requirment[idr] = value + requerimiento_adicional
+                    new_requirment['unidad'] = 'mg'
+                    return new_requirment
+        
 class VitaminasComplejoB:
     @staticmethod
     def obtener_requerimiento_vitaminas_b(p: Persona) -> dict:
@@ -523,6 +555,128 @@ class AcidoPantotenico:
                 return requerimiento
 
         raise ValueError(f"No se encontraron requerimientos de ácido pantoténico {p.edad} y sexo {p.sexo}")
+
+
+class VitaminaC:
+
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+
+        if p.esta_en_lactancia:
+            return VITAMINA_C_LACTANCIA
+
+        if p.esta_embarazada:
+            return VITAMINA_C_EMBARAZO
+
+        if p.edad < 10:
+            requerimientos = REQUERIMIENTOS_VITAMINA_C["todos"]
+        else:
+            requerimientos = REQUERIMIENTOS_VITAMINA_C[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                return requerimiento
+
+        raise ValueError(
+            f"No se encontró requerimiento de vitamina C "
+            f"para edad {p.edad} y sexo {p.sexo}"
+        )
+
+class VitaminaD:
+
+    @staticmethod
+    def obtener_ia(p: Persona) -> float:
+
+        if p.esta_embarazada or p.esta_en_lactancia:
+            return 5
+
+        if p.edad < 50:
+            return 5
+
+        if p.edad <= 70:
+            return 10
+
+        return 15
+
+    @staticmethod
+    def obtener_limite_superior(p: Persona) -> float:
+        return 25 if p.edad < 1 else 50
+
+    @staticmethod
+    def evaluar(p: Persona) -> dict:
+
+        ia = VitaminaD.obtener_ia(p)
+        maximo = VitaminaD.obtener_limite_superior(p)
+
+        # INCAP mantiene explícitamente la recomendación
+        # dietética en niños pequeños y adultos mayores.
+        requiere_fuente_dietetica = (
+            p.edad < 4
+            or p.edad > 50
+            or p.esta_embarazada
+            or p.esta_en_lactancia
+            or not p.exposicion_solar_suficiente
+        )
+
+        return {
+            "ia": ia,
+            "minimo_efectivo": ia if requiere_fuente_dietetica else None,
+            "idr": "ingesta_adecuada",
+            "requiere_fuente_dietetica": requiere_fuente_dietetica,
+            "exposicion_solar_suficiente": p.exposicion_solar_suficiente,
+            "maximo": maximo,
+            "unidad": "ug",
+        }
+class VitaminaE:
+
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+
+        if p.esta_en_lactancia:
+            return VITAMINA_E_LACTANCIA
+
+        if p.esta_embarazada:
+            return VITAMINA_E_EMBARAZO
+
+        if p.edad < 10:
+            requerimientos = REQUERIMIENTOS_VITAMINA_E["todos"]
+        else:
+            requerimientos = REQUERIMIENTOS_VITAMINA_E[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                return requerimiento
+
+        raise ValueError(
+            f"No se encontró requerimiento de vitamina E "
+            f"para edad {p.edad} y sexo {p.sexo}"
+        )
+
+
+class VitaminaK:
+
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+
+        if p.esta_en_lactancia:
+            return VITAMINA_K_LACTANCIA
+
+        if p.esta_embarazada:
+            return VITAMINA_K_EMBARAZO
+
+        if p.edad < 10:
+            requerimientos = REQUERIMIENTOS_VITAMINA_K["todos"]
+        else:
+            requerimientos = REQUERIMIENTOS_VITAMINA_K[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                return requerimiento
+
+        raise ValueError(
+            f"No se encontró requerimiento de vitamina K "
+            f"para edad {p.edad} y sexo {p.sexo}"
+        )
 
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
@@ -633,14 +787,20 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     requerimiento_vitamina_a = VitaminaA.obtener_requerimiento(p)
 
-    vitamin_a_ul = VitaminaA.obtener_limite_superior(p.edad)
+    imt_vitamina_a = VitaminaA.obtener_imt(p.edad)
 
     if requerimiento_vitamina_a["rdd"] is not None:
-        vitamin_a_minimum = requerimiento_vitamina_a["rdd"]
-        vitamin_a_reference_type = "rdd"
+        minimo_vitamina_a = requerimiento_vitamina_a["rdd"]
+        tipo_referencia_vitamina_a = "rdd"
     else:
-        vitamin_a_minimum = requerimiento_vitamina_a["ia"]
-        vitamin_a_reference_type = "ingesta_adecuada"
+        minimo_vitamina_a = requerimiento_vitamina_a["ia"]
+        tipo_referencia_vitamina_a = "ingesta_adecuada"
+
+    """
+    Tiamina
+    """
+    requerimiento_tiamina = Tiamina.obtener_requerimiento(p)
+  
 
     """
     Vitaminas del complejo B
@@ -652,6 +812,26 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Acido Pantotenico
     """
     requerimiento_acido_pantotenico = AcidoPantotenico.obtener_requerimiento(p)
+
+    """
+    Vitamina C
+    """
+    requerimiento_vitamina_c = VitaminaC.obtener_requerimiento(p)
+
+    """
+    Vitamina D
+    """
+    evaluacion_vitamina_d = VitaminaD.evaluar(p)
+
+    """
+    Vitamina E
+    """
+    requerimiento_vitamina_e = VitaminaE.obtener_requerimiento(p)
+
+    """
+    Vitamina K
+    """
+    requerimiento_vitamina_k = VitaminaK.obtener_requerimiento(p)
 
     return {
         "energia":{
@@ -715,25 +895,21 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             },
         },
         "micronutrientes": {
-            "vitamina_a": {
-                "rpe": requerimiento_vitamina_a["rpe"],
-                "rdd": requerimiento_vitamina_a["rdd"],
-                "ia": requerimiento_vitamina_a["ia"],
+        "vitamina_a": {
+            "rpe": requerimiento_vitamina_a["rpe"],
+            "rdd": requerimiento_vitamina_a["rdd"],
+            "ia": requerimiento_vitamina_a["ia"],
 
-                "minimo_efectivo": vitamin_a_minimum,
-                "idr": vitamin_a_reference_type,
+            "minimo_efectivo": minimo_vitamina_a,
+            "idr": tipo_referencia_vitamina_a,
+            "unidad": "ug_EAR",
 
-                "maximo": vitamin_a_ul,
-
-                "unidad": "ug_EAR",
+            "limite_retinol": {
+                "maximo": imt_vitamina_a,
+                "unidad": "ug_retinol",
             },
-            "tiamina": {
-                "rpe": requerimiento_vitaminas_b["rpe"]["tiamina"],
-                "rdd": requerimiento_vitaminas_b["rdd"]["tiamina"],
-                "minimo_efectivo": requerimiento_vitaminas_b["rdd"]["tiamina"],
-                "idr": "rdd",
-                "unidad": "mg",
             },
+            "tiamina": requerimiento_tiamina,
 
             "riboflavina": {
                 "rpe": requerimiento_vitaminas_b["rpe"]["riboflavina"],
@@ -781,7 +957,28 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
                 "idr": "ingesta_adecuada",
                 "unidad": "mg",
             },
+            "vitamina_c": {
+                "ia": requerimiento_vitamina_c,
+                "minimo_efectivo": requerimiento_vitamina_c,
+                "idr": "ingesta_adecuada",
+                "unidad": "mg",
+            },
 
+            "vitamina_d": evaluacion_vitamina_d,
+
+            "vitamina_e": {
+                "ia": requerimiento_vitamina_e,
+                "minimo_efectivo": requerimiento_vitamina_e,
+                "idr": "ingesta_adecuada",
+                "unidad": "mg_alfa_tocoferol",
+            },
+
+            "vitamina_k": {
+                "ia": requerimiento_vitamina_k,
+                "minimo_efectivo": requerimiento_vitamina_k,
+                "idr": "ingesta_adecuada",
+                "unidad": "ug",
+            },
         }
         
     }
