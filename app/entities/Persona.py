@@ -12,20 +12,21 @@ class Persona:
     reservas_de_energia_maternales: bool
     esta_en_lactancia: bool
     peso_preembarazo: float | None
+    mes_de_lactancia: int
 
     def __init__(self, edad, sexo, peso, naf=None, altura=None, 
                  esta_embarazada=False, mes_de_embarazo=None, reservas_de_energia_maternales=False,
-                  esta_en_lactancia=False, peso_preembarazo: float = None):
+                  esta_en_lactancia=False, peso_preembarazo: float = None, mes_de_lactancia: int = None):
 
-        if not sexo in ['men', 'women']: 
-            raise ValueError('Gender must be either men or women ')
+        if not sexo in ['hombre', 'mujer']: 
+            raise ValueError('Gender must be either hombre or mujer ')
 
         if edad < 0:
             raise ValueError("Edad must be greater than 0")
 
-        if sexo=='men': 
+        if sexo=='hombre': 
             if esta_embarazada or esta_en_lactancia: 
-                raise ValueError('Cannot instanciate men pregnant or in lactancy.')
+                raise ValueError('Cannot instanciate hombre pregnant or in lactancy.')
 
         else:
             if esta_embarazada:
@@ -33,7 +34,7 @@ class Persona:
                     if not (mes_de_embarazo < 10 and  mes_de_embarazo >= 0 ):
                         raise ValueError(f'Pregnancy month not a valid value, must be a number between 0-9 ()')
                 else: 
-                    raise ValueError('Must define pregnancy in case women is pregnant') 
+                    raise ValueError('Must define pregnancy in case mujer is pregnant') 
 
 
         
@@ -46,6 +47,7 @@ class Persona:
         self.esta_embarazada = esta_embarazada
         self.mes_de_embarazo = mes_de_embarazo
         self.esta_en_lactancia = esta_en_lactancia
+        self.mes_de_lactancia = mes_de_lactancia
         self.reservas_de_energia_maternales = reservas_de_energia_maternales
         self.peso_preembarazo = peso_preembarazo
 
@@ -61,7 +63,7 @@ class Persona:
             self.naf_indice = 1.55
             return 
         
-        if self.sexo == 'women': 
+        if self.sexo == 'mujer': 
             self.naf_indice = 1.75 if self.naf == 'moderate' else 2.1 
             return
         # Hombre

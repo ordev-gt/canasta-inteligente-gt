@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug nutrition",
+            "name": "Debug main nutrition evaluation",
             "type": "debugpy",
             "request": "launch",
-            "module": "app.functions.nutrition",
+            "module": "app.functions.main",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         }

@@ -1,5 +1,5 @@
 from collections import List, Tuple
-from .Person import Persona
+from .Persona import Persona
 
 
 class Family: 
