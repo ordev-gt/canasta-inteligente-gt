@@ -6,7 +6,6 @@ from .requerimientos import (
     REQUERIMIENTOS_LIPIDOS, REQUERIMIENTOS_CARBOHIDRATOS, KCAL_POR_GRAMO_GRASA, CARBOHIDRATOS_ENERGIA_MIN, 
     CARBOHIDRATOS_ENERGIA_MAX, AZUCARES_REFINADOS_ENERGIA_MAX, KCAL_POR_GRAMO_CARBOHIDRATO,
     VITAMINA_A_EMBARAZO, VITAMINA_A_LACTANCIA, REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
-    VITAMINAS_B_EMBARAZO, VITAMINAS_B_LACTANCIA, REQUERIMIENTOS_VITAMINAS_B,
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_EMBARAZO, ACIDO_PANTOTENICO_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_EMBARAZO, VITAMINA_C_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
@@ -17,7 +16,8 @@ from .requerimientos import (
     REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA, REQUERIMIENTOS_RIBOFLAVINA,
     REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA,
     REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA, REQUERIMIENTOS_VITAMINAB6, IMT_VITAMINA_B6,
-    REQUERIMIENTOS_FOLATOS, REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA, IMT_FOLATO_SINTETICO
+    REQUERIMIENTOS_FOLATOS, REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA, IMT_FOLATO_SINTETICO,
+    REQUERIMIENTOS_VITAMINAB12, REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO, REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA
     
     )
 
@@ -507,8 +507,9 @@ class Tiamina:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
-                    requerimiento['unidad'] = 'mg'
-                    return requerimiento
+                    requerimiento_individuo = requerimiento.copy()
+                    requerimiento_individuo['unidad'] = 'mg'
+                    return requerimiento_individuo
                 else:
                     new_requirment = {}
                     for idr, value in requerimiento.items():
@@ -533,8 +534,9 @@ class Riboflavina:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
-                    requerimiento['unidad'] = 'mg'
-                    return requerimiento
+                    requerimiento_individuo = requerimiento.copy()
+                    requerimiento_individuo['unidad'] = 'mg'
+                    return requerimiento_individuo
                 else:
                     new_requirment = {}
                     for idr, value in requerimiento.items():
@@ -558,8 +560,9 @@ class Niacina:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
-                    requerimiento['unidad'] = 'mg'
-                    return requerimiento
+                    requerimiento_individuo = requerimiento.copy()
+                    requerimiento_individuo['unidad'] = 'mg'
+                    return requerimiento_individuo
                 else:
                     new_requirment = {}
                     for idr, value in requerimiento.items():
@@ -585,9 +588,10 @@ class VitaminaB6:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
-                    requerimiento['imt'] = imt
-                    requerimiento['unidad'] = 'mg'
-                    return requerimiento
+                    requerimiento_individuo = requerimiento.copy()
+                    requerimiento_individuo['imt'] = imt
+                    requerimiento_individuo['unidad'] = 'mg'
+                    return requerimiento_individuo
                 else:
                     new_requirment = {}
                     for idr, value in requerimiento.items():
@@ -613,9 +617,10 @@ class Folatos:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
-                    requerimiento['imt'] = imt
-                    requerimiento['unidad'] = 'mcg'
-                    return requerimiento
+                    requerimiento_individual = requerimiento.copy()
+                    requerimiento_individual['folato_sintetico'] = {'imt':imt, 'unidad': 'mcg'}
+                    requerimiento_individual['unidad'] = 'mcg EFD'
+                    return requerimiento_individual
                 else:
                     new_requirment = {}
                     for idr, value in requerimiento.items():
@@ -623,33 +628,38 @@ class Folatos:
                             new_requirment[idr] = value
                         else: 
                             new_requirment[idr] = value + requerimiento_adicional
-                    new_requirment['imt'] = imt
-                    new_requirment['unidad'] = 'mcg'
+                    new_requirment['folato_sintetico'] = {'imt':imt, 'unidad': 'mcg'}
+                    new_requirment['unidad'] = 'mcg EFD'
                     return new_requirment
 
         raise ValueError(f"No se encontró un requerimiento apropiado de Folato para el individuo")
 
-
-
-class VitaminasComplejoB:
+class VitaminaB12:
     @staticmethod
-    def obtener_requerimiento_vitaminas_b(p: Persona) -> dict:
-        if p.esta_en_lactancia:
-            return VITAMINAS_B_LACTANCIA
-
-        if p.esta_embarazada:
-            return VITAMINAS_B_EMBARAZO
-
-        if p.edad < 10:
-            requerimientos = REQUERIMIENTOS_VITAMINAS_B["todos"]
-        else:
-            requerimientos = REQUERIMIENTOS_VITAMINAS_B[p.sexo]
+    def obtener_requerimiento(p:Persona):
+        requerimiento_adicional: int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA if p.esta_en_lactancia else 0      
+        requerimientos = REQUERIMIENTOS_VITAMINAB12["todos"] if p.edad < 10 else REQUERIMIENTOS_VITAMINAB12[p.sexo]
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return requerimiento
+                if requerimiento_adicional == 0:
+                    requerimiento_individual = requerimiento.copy()
+                    requerimiento_individual['unidad'] = 'mcg'
+                    return requerimiento_individual
+                else:
+                    new_requirment = {}
+                    for idr, value in requerimiento.items():
+                        if value is None: 
+                            new_requirment[idr] = value
+                        else: 
+                            new_requirment[idr] = value + requerimiento_adicional
+                    new_requirment['unidad'] = 'mcg'
+                    return new_requirment
 
-        raise ValueError(f"No se encontraron requerimientos de vitaminas B para edad {p.edad} y sexo {p.sexo}")
+        raise ValueError(f"No se encontró un requerimiento apropiado de VitaminaB12 para el individuo")
+
 
 class AcidoPantotenico:
     @staticmethod
@@ -932,12 +942,10 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Folatos
     """
     requerimiento_folatos = Folatos.obtener_requerimiento(p)
-    
     """
-    Vitaminas del complejo B
+    Vitamina B12
     """
-    requerimiento_vitaminas_b = VitaminasComplejoB.obtener_requerimiento_vitaminas_b(p)
-
+    requerimientos_vitaminab12 = VitaminaB12.obtener_requerimiento(p)
     """
     Acido Pantotenico
     """
@@ -1045,13 +1053,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
             "folatos": requerimiento_folatos,
 
-            "vitamina_b12": {
-                "rpe": requerimiento_vitaminas_b["rpe"]["vitamina_b12"],
-                "rdd": requerimiento_vitaminas_b["rdd"]["vitamina_b12"],
-                "minimo_efectivo": requerimiento_vitaminas_b["rdd"]["vitamina_b12"],
-                "idr": "rdd",
-                "unidad": "ug",
-            },
+            "vitamina_b12": requerimientos_vitaminab12,
 
             "acido_pantotenico": {
                 "ia": requerimiento_acido_pantotenico,

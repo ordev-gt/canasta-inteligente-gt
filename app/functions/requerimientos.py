@@ -874,224 +874,83 @@ IMT_FOLATO_SINTETICO = {
     float('inf'): 1000
 }
 
+"""
+Vitamina B12
+"""
+REQUERIMIENTOS_VITAMINAB12 =  { 
+    "todos": {
+        0.5: {
+            "ia": 0.4,
+            "rpe": None, 
+            "rdd": None
+        },
+        1: {
+            "ia": 0.5, 
+            "rpe": None, 
+            "rdd": None
+        },
+        4: {
+            "ia": None, 
+            "rpe": 0.7, 
+            "rdd": 0.9 
+        },
+        7: {
+            "ia": None, 
+            "rpe": 0.9, 
+            "rdd": 1.1 
+        },
+        10: {
+            "ia": None, 
+            "rpe": 1.1, 
+            "rdd": 1.3
+        },
+    },
+    "hombre":{
+        12: {
+            "ia": None, 
+            "rpe": 1.2, 
+            "rdd": 1.5 
+        },
+        14: {
+            "ia": None, 
+            "rpe": 1.5, 
+            "rdd": 1.8
+        },
+        16: {
+            "ia": None, 
+            "rpe": 1.8, 
+            "rdd": 2.2
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 2.0, 
+            "rdd": 2.4
+        }
+    },
+    "mujer":{
+        14: {
+            "ia": None, 
+            "rpe": 1.5, 
+            "rdd": 1.8 
+        },
 
+        float("inf"): {
+            "ia": None, 
+            "rpe": 2.0, 
+            "rdd": 2.4
+        }
+    } 
+}
 
+REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO = 0.2
+REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA = 0.4
 """
 
 ####
 Vitamina Complejo B
 ####
 """
-REQUERIMIENTOS_VITAMINAS_B = {
-    "todos": {
-        0.5: {
-            "ia": {
-                "tiamina": 0.2,
-                "riboflavina": 0.3,
-                "niacina": 2,
-                "vitamina_b6": 0.1,
-                "folatos": 52,
-                "vitamina_b12": 0.4,
-            },
-            "rpe": None,
-            "rdd": None,
-        },
-        1: {
-            "ia": None,
-            "rpe": {
-                "tiamina": 0.3,
-                "riboflavina": 0.4,
-                "niacina": 4,
-                "vitamina_b6": 0.3,
-                "folatos": 75,
-                "vitamina_b12": 0.5,
-            },
-            "rdd": None,
-        },
 
-        4: {
-            "ia": None,
-            "rpe": {
-                "tiamina": 0.4,
-                "riboflavina": 0.4,
-                "niacina": 4,
-                "vitamina_b6": 0.4,
-                "folatos": 120,
-                "vitamina_b12": 0.7,
-            },
-            "rdd": {
-                "tiamina": 0.4,
-                "riboflavina": 0.5,
-                "niacina": 6,
-                "vitamina_b6": 0.5,
-                "folatos": 150,
-                "vitamina_b12": 0.9,
-            },
-        },
-
-        7: {
-            "ia": None,
-            "rpe": {
-                "tiamina": 0.4,
-                "riboflavina": 0.4,
-                "niacina": 5,
-                "vitamina_b6": 0.5,
-                "folatos": 140,
-                "vitamina_b12": 0.9,
-            },
-            "rdd": {
-                "tiamina": 0.5,
-                "riboflavina": 0.5,
-                "niacina": 6,
-                "vitamina_b6": 0.6,
-                "folatos": 170,
-                "vitamina_b12": 1.1,
-            },
-        },
-
-        10: {
-            "ia": None,
-            "rpe": {
-                "tiamina": 0.5,
-                "riboflavina": 0.5,
-                "niacina": 6,
-                "vitamina_b6": 0.6,
-                "folatos": 170,
-                "vitamina_b12": 1.1,
-            },
-            "rdd": {
-                "tiamina": 0.6,
-                "riboflavina": 0.6,
-                "niacina": 8,
-                "vitamina_b6": 0.7,
-                "folatos": 200,
-                "vitamina_b12": 1.3,
-            },
-        },
-    },
-
-    "hombre": {
-        12: {
-            "ia": None,
-            "rpe": {"tiamina": 0.6, "riboflavina": 0.7, "niacina": 7, "vitamina_b6": 0.7, "folatos": 200, "vitamina_b12": 1.2},
-            "rdd": {"tiamina": 0.7, "riboflavina": 0.8, "niacina": 9, "vitamina_b6": 0.8, "folatos": 250, "vitamina_b12": 1.5},
-        },
-        14: {
-            "ia": None,
-            "rpe": {"tiamina": 0.7, "riboflavina": 0.8, "niacina": 9, "vitamina_b6": 0.8, "folatos": 250, "vitamina_b12": 1.5},
-            "rdd": {"tiamina": 0.9, "riboflavina": 1.0, "niacina": 11, "vitamina_b6": 1.0, "folatos": 300, "vitamina_b12": 1.8},
-        },
-        16: {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 1.0, "niacina": 10, "vitamina_b6": 1.0, "folatos": 280, "vitamina_b12": 1.8},
-            "rdd": {"tiamina": 1.0, "riboflavina": 1.2, "niacina": 14, "vitamina_b6": 1.2, "folatos": 350, "vitamina_b12": 2.2},
-        },
-        18: {
-            "ia": None,
-            "rpe": {"tiamina": 1.0, "riboflavina": 1.1, "niacina": 12, "vitamina_b6": 1.1, "folatos": 310, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.2, "riboflavina": 1.3, "niacina": 15, "vitamina_b6": 1.3, "folatos": 375, "vitamina_b12": 2.4},
-        },
-        30: {
-            "ia": None,
-            "rpe": {"tiamina": 1.0, "riboflavina": 1.1, "niacina": 12, "vitamina_b6": 1.1, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.2, "riboflavina": 1.3, "niacina": 16, "vitamina_b6": 1.3, "folatos": 400, "vitamina_b12": 2.4},
-        },
-        65: {
-            "ia": None,
-            "rpe": {"tiamina": 1.0, "riboflavina": 1.1, "niacina": 12, "vitamina_b6": 1.1, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.2, "riboflavina": 1.3, "niacina": 16, "vitamina_b6": 1.3, "folatos": 400, "vitamina_b12": 2.4},
-        },
-        float("inf"): {
-            "ia": None,
-            "rpe": {"tiamina": 1.0, "riboflavina": 1.1, "niacina": 12, "vitamina_b6": 1.4, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.2, "riboflavina": 1.3, "niacina": 16, "vitamina_b6": 1.7, "folatos": 400, "vitamina_b12": 2.4},
-        },
-    },
-
-    "mujer": {
-        12: {
-            "ia": None,
-            "rpe": {"tiamina": 0.7, "riboflavina": 0.7, "niacina": 8, "vitamina_b6": 0.8, "folatos": 225, "vitamina_b12": 1.5},
-            "rdd": {"tiamina": 0.8, "riboflavina": 0.8, "niacina": 10, "vitamina_b6": 1.0, "folatos": 280, "vitamina_b12": 1.8},
-        },
-        14: {
-            "ia": None,
-            "rpe": {"tiamina": 0.8, "riboflavina": 0.8, "niacina": 10, "vitamina_b6": 1.0, "folatos": 280, "vitamina_b12": 1.5},
-            "rdd": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 13, "vitamina_b6": 1.2, "folatos": 350, "vitamina_b12": 1.8},
-        },
-        16: {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 11, "vitamina_b6": 1.1, "folatos": 310, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.1, "riboflavina": 1.1, "niacina": 14, "vitamina_b6": 1.3, "folatos": 375, "vitamina_b12": 2.4},
-        },
-        18: {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 11, "vitamina_b6": 1.1, "folatos": 325, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.1, "riboflavina": 1.1, "niacina": 15, "vitamina_b6": 1.3, "folatos": 400, "vitamina_b12": 2.4},
-        },
-        30: {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 11, "vitamina_b6": 1.1, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.1, "riboflavina": 1.1, "niacina": 14, "vitamina_b6": 1.3, "folatos": 400, "vitamina_b12": 2.4},
-        },
-        65: {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 11, "vitamina_b6": 1.1, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.1, "riboflavina": 1.1, "niacina": 14, "vitamina_b6": 1.3, "folatos": 400, "vitamina_b12": 2.4},
-        },
-        float("inf"): {
-            "ia": None,
-            "rpe": {"tiamina": 0.9, "riboflavina": 0.9, "niacina": 11, "vitamina_b6": 1.3, "folatos": 320, "vitamina_b12": 2.0},
-            "rdd": {"tiamina": 1.1, "riboflavina": 1.1, "niacina": 14, "vitamina_b6": 1.6, "folatos": 400, "vitamina_b12": 2.4},
-        },
-    },
-}
-
-VITAMINAS_B_EMBARAZO = {
-    "rpe": {
-        "tiamina": 1.2,
-        "riboflavina": 1.2,
-        "niacina": 14,
-        "vitamina_b6": 1.6,
-        "folatos": 520,
-        "vitamina_b12": 2.2,
-    },
-    "rdd": {
-        "tiamina": 1.4,
-        "riboflavina": 1.4,
-        "niacina": 18,
-        "vitamina_b6": 1.9,
-        "folatos": 600,
-        "vitamina_b12": 2.6,
-    },
-}
-
-VITAMINAS_B_LACTANCIA = {
-    "rpe": {
-        "tiamina": 1.1,
-        "riboflavina": 1.3,
-        "niacina": 13,
-        "vitamina_b6": 1.7,
-        "folatos": 450,
-        "vitamina_b12": 2.4,
-    },
-    "rdd": {
-        "tiamina": 1.3,
-        "riboflavina": 1.6,
-        "niacina": 17,
-        "vitamina_b6": 2.0,
-        "folatos": 500,
-        "vitamina_b12": 2.8,
-    },
-}
-
-LIMITE_SUPERIOR_VITAMINA_B6 = {
-    4: 30,          # 1-3 años
-    9: 40,          # 4-8
-    14: 60,         # 9-13
-    19: 80,         # 14-18
-    float("inf"): 100,
-}
 """
 ####
 Acido Pantotenico
