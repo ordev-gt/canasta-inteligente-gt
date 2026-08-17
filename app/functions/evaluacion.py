@@ -16,7 +16,8 @@ from .requerimientos import (
     REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA, REQUERIMIENTOS_RIBOFLAVINA,
     REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA,
-    REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA, REQUERIMIENTOS_VITAMINAB6, IMT_VITAMINA_B6
+    REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA, REQUERIMIENTOS_VITAMINAB6, IMT_VITAMINA_B6,
+    REQUERIMIENTOS_FOLATOS, REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA, IMT_FOLATO_SINTETICO
     
     )
 
@@ -600,6 +601,36 @@ class VitaminaB6:
 
         raise ValueError(f"No se encontró un requerimiento apropiado de VitaminaB6 para el individuo")
 
+class Folatos:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        requerimiento_adicional: int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA if p.esta_en_lactancia else 0      
+        requerimientos = REQUERIMIENTOS_FOLATOS["todos"] if p.edad < 10 else REQUERIMIENTOS_FOLATOS[p.sexo]
+        imt = [imt for edad_maxima, imt in IMT_FOLATO_SINTETICO.items() if p.edad < edad_maxima][0]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                if requerimiento_adicional == 0:
+                    requerimiento['imt'] = imt
+                    requerimiento['unidad'] = 'mcg'
+                    return requerimiento
+                else:
+                    new_requirment = {}
+                    for idr, value in requerimiento.items():
+                        if value is None: 
+                            new_requirment[idr] = value
+                        else: 
+                            new_requirment[idr] = value + requerimiento_adicional
+                    new_requirment['imt'] = imt
+                    new_requirment['unidad'] = 'mcg'
+                    return new_requirment
+
+        raise ValueError(f"No se encontró un requerimiento apropiado de Folato para el individuo")
+
+
+
 class VitaminasComplejoB:
     @staticmethod
     def obtener_requerimiento_vitaminas_b(p: Persona) -> dict:
@@ -897,11 +928,14 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Vitamina B6
     """
     requerimiento_vitaminab6 = VitaminaB6.obtener_requerimiento(p)
+    """
+    Folatos
+    """
+    requerimiento_folatos = Folatos.obtener_requerimiento(p)
     
     """
     Vitaminas del complejo B
     """
-
     requerimiento_vitaminas_b = VitaminasComplejoB.obtener_requerimiento_vitaminas_b(p)
 
     """
@@ -1009,13 +1043,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "niacina": requerimiento_niacina,
             "vitamina_b6": requerimiento_vitaminab6,
 
-            "folatos": {
-                "rpe": requerimiento_vitaminas_b["rpe"]["folatos"],
-                "rdd": requerimiento_vitaminas_b["rdd"]["folatos"],
-                "minimo_efectivo": requerimiento_vitaminas_b["rdd"]["folatos"],
-                "idr": "rdd",
-                "unidad": "ug_EFD",
-            },
+            "folatos": requerimiento_folatos,
 
             "vitamina_b12": {
                 "rpe": requerimiento_vitaminas_b["rpe"]["vitamina_b12"],

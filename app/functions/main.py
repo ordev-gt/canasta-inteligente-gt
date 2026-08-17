@@ -38,35 +38,35 @@ if __name__ == "__main__":
         print(nombre)
         print("=" * 80)
 
-        try:
-            evaluacion_peso_resultado = Peso.evaluacion_peso(persona)
-            requerimientos = evaluacion_de_requerimientos_diarios(persona)
+        #try:
+        evaluacion_peso_resultado = Peso.evaluacion_peso(persona)
+        requerimientos = evaluacion_de_requerimientos_diarios(persona)
 
-            print(f"Edad: {persona.edad} años ({persona.edad_meses} meses)")
-            print(f"Sexo: {persona.sexo}")
-            print(f"Peso real: {persona.peso:.2f} kg")
-            print(f"Altura: {persona.altura:.2f} m")
-            print(f"NAF: {persona.naf}")
-            print()
+        print(f"Edad: {persona.edad} años ({persona.edad_meses} meses)")
+        print(f"Sexo: {persona.sexo}")
+        print(f"Peso real: {persona.peso:.2f} kg")
+        print(f"Altura: {persona.altura:.2f} m")
+        print(f"NAF: {persona.naf}")
+        print()
 
-            print("EVALUACIÓN DEL PESO")
-            print(f"Estado: {evaluacion_peso_resultado['estado_de_indicador']}")
-            print(f"Peso para cálculos: {evaluacion_peso_resultado['peso_para_calculos']:.2f} kg")
-            print(f"Fuente de peso: {evaluacion_peso_resultado['fuente_de_peso']}")
-            print(f"Requiere intervención profesional: {evaluacion_peso_resultado['requiere_intervencion_profesional']}")
-            print()
+        print("EVALUACIÓN DEL PESO")
+        print(f"Estado: {evaluacion_peso_resultado['estado_de_indicador']}")
+        print(f"Peso para cálculos: {evaluacion_peso_resultado['peso_para_calculos']:.2f} kg")
+        print(f"Fuente de peso: {evaluacion_peso_resultado['fuente_de_peso']}")
+        print(f"Requiere intervención profesional: {evaluacion_peso_resultado['requiere_intervencion_profesional']}")
+        print()
 
-            print("REQUERIMIENTOS DIARIOS")
-            print(f"Energía: {requerimientos['energia']['ree']:.2f} kcal/día")
-            print(f"Proteína RPE: {requerimientos['proteina']['rpe']:.2f} g/día")
-            print(f"Proteína dieta de referencia: {requerimientos['proteina']['rdd']['dieta_de_referencia']:.2f} g/día")
+        print("REQUERIMIENTOS DIARIOS")
+        print(f"Energía: {requerimientos['energia']['ree']:.2f} kcal/día")
+        print(f"Proteína RPE: {requerimientos['proteina']['rpe']:.2f} g/día")
+        print(f"Proteína dieta de referencia: {requerimientos['proteina']['rdd']['dieta_de_referencia']:.2f} g/día")
 
-            proteina_mixta = requerimientos["proteina"]["rdd"]["dieta_mixta"]
+        proteina_mixta = requerimientos["proteina"]["rdd"]["dieta_mixta"]
 
-            if proteina_mixta is not None:
-                print(f"Proteína dieta mixta: {proteina_mixta:.2f} g/día")
-            else:
-                print("Proteína dieta mixta: No disponible")
+        if proteina_mixta is not None:
+            print(f"Proteína dieta mixta: {proteina_mixta:.2f} g/día")
+        else:
+            print("Proteína dieta mixta: No disponible")
 
-        except Exception as e:
-            print(f"ERROR: {e}")
+        #except Exception as e:
+            #print(f"ERROR: {e}")

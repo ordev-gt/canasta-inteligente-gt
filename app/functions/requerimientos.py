@@ -777,6 +777,107 @@ IMT_VITAMINA_B6 = {
     float('inf'): 100
 }
 """
+Folatos
+
+"""
+REQUERIMIENTOS_FOLATOS =  { # EFD = Equivalentes de Folato Dietetico
+    "todos": {
+        0.5: {
+            "ia": 52,
+            "rpe": None, 
+            "rdd": None
+        },
+        1: {
+            "ia": 75, 
+            "rpe": None, 
+            "rdd": None
+        },
+        4: {
+            "ia": None, 
+            "rpe": 120, 
+            "rdd": 150 
+        },
+        7: {
+            "ia": None, 
+            "rpe": 140, 
+            "rdd": 170 
+        },
+        10: {
+            "ia": None, 
+            "rpe": 170, 
+            "rdd": 200
+        },
+    },
+    "hombre":{
+        12: {
+            "ia": None, 
+            "rpe": 200, 
+            "rdd": 250 
+        },
+        14: {
+            "ia": None, 
+            "rpe": 250, 
+            "rdd": 300
+        },
+        16: {
+            "ia": None, 
+            "rpe": 280, 
+            "rdd": 350
+        },
+        18: {
+            "ia": None, 
+            "rpe": 310, 
+            "rdd": 375
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 320, 
+            "rdd": 400
+        }
+    },
+    "mujer":{
+        12: {
+            "ia": None, 
+            "rpe": 225, 
+            "rdd": 280
+        },
+        14: {
+            "ia": None, 
+            "rpe": 280, 
+            "rdd": 350
+        },
+        16: {
+            "ia": None, 
+            "rpe": 310, 
+            "rdd": 375
+        },
+        18: {
+            "ia": None, 
+            "rpe": 325, 
+            "rdd": 400
+        },
+        float("inf"): {
+            "ia": None, 
+            "rpe": 320, 
+            "rdd": 400
+        },
+    } 
+}
+
+REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS = 250
+REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA =  130
+RECOMENDACION_ACIDO_FOLICO_SUPLEMENTARIO_EMBARAZO = 400  
+
+IMT_FOLATO_SINTETICO = {
+    12: 300, 
+    18: 600,
+    float('inf'): 1000
+}
+
+
+
+"""
+
 ####
 Vitamina Complejo B
 ####
