@@ -1,5 +1,6 @@
 
 class Persona: 
+    nombre: str
     edad: int # years
     edad_meses: int
     sexo: str
@@ -14,7 +15,9 @@ class Persona:
     peso_preembarazo: float | None
     mes_de_lactancia: int
 
-    def __init__(self, edad, sexo, peso, naf=None, altura=None, 
+    peso_para_calculos:float
+
+    def __init__(self, nombre, edad, sexo, peso, naf=None, altura=None, 
                  esta_embarazada=False, mes_de_embarazo=None, reservas_de_energia_maternales=False,
                   esta_en_lactancia=False, peso_preembarazo: float = None, mes_de_lactancia: int = None,
                   exposicion_solar_suficiente = True):
@@ -38,7 +41,7 @@ class Persona:
                     raise ValueError('Must define pregnancy in case mujer is pregnant') 
 
 
-        
+        self.nombre = nombre
         self.edad = edad
         self.edad_meses = round(edad * 12) # Aproximacion, preguntar si es conveniente indicar que se ingrese la edad exacta con meses. Ingresar fecha de nacimiento?
         self.sexo = sexo
@@ -52,9 +55,10 @@ class Persona:
         self.reservas_de_energia_maternales = reservas_de_energia_maternales
         self.peso_preembarazo = peso_preembarazo
         self.exposicion_solar_suficiente = exposicion_solar_suficiente
+        self.peso_para_calculos = None
         self.calculate_naf_index()
 
-
+    
     def calculate_naf_index(self): 
         if self.naf is None: 
             self.naf_indice = None

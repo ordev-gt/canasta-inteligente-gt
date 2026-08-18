@@ -2,10 +2,19 @@ from ..entities.Persona import Persona
 from .requerimientos import (
     PESO_LONGITUD_NINAS_0_2, PESO_ALTURA_NINAS_2_5, PESO_ALTURA_NINOS_2_5, PESO_LONGITUD_NINOS_0_2, 
     IMC_ADULTO_MIN, IMC_ADULTO_MAX, IMC_REFERENCIA_INCAP, IMC_OBESIDAD_MIN,
-    TMB, REQUERIMIENTOS_PROTEINA,
-    REQUERIMIENTOS_LIPIDOS, REQUERIMIENTOS_CARBOHIDRATOS, KCAL_POR_GRAMO_GRASA, CARBOHIDRATOS_ENERGIA_MIN, 
+    TMB, ENERGIA_ADICIONAL_EMBARAZDA_SEGUNDO_TRIMESTRE, ENERGIA_ADICIONAL_EMBARAZDA_TERCER_TRIMESTRE,
+    REQUERIMIENTOS_PROTEINA, PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE,
+    PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE,
+    PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE,
+    PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE,
+    PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE,
+    PROTEINA_DIETA_MIXTA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE,
+    PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_SEGUNDO_SEMESTRE,
+    PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_SEMESTRE,
+
+    RDD_LIPIDOS, RECOMENDACION_MAXIMO_COLESTEROL_MG,REQUERIMIENTOS_CARBOHIDRATOS, KCAL_POR_GRAMO_GRASA, CARBOHIDRATOS_ENERGIA_MIN, 
     CARBOHIDRATOS_ENERGIA_MAX, AZUCARES_REFINADOS_ENERGIA_MAX, KCAL_POR_GRAMO_CARBOHIDRATO,
-    VITAMINA_A_EMBARAZO, VITAMINA_A_LACTANCIA, REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
+    REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_EMBARAZO, ACIDO_PANTOTENICO_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_EMBARAZO, VITAMINA_C_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
@@ -17,7 +26,9 @@ from .requerimientos import (
     REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA,
     REQUERIMIENTO_ADICIONAL_VITAMINAB6_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_VITAMINAB6_LACTANCIA, REQUERIMIENTOS_VITAMINAB6, IMT_VITAMINA_B6,
     REQUERIMIENTOS_FOLATOS, REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA, IMT_FOLATO_SINTETICO,
-    REQUERIMIENTOS_VITAMINAB12, REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO, REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA
+    REQUERIMIENTOS_VITAMINAB12, REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO, REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA,
+    REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES,
+    CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA
     
     )
 
@@ -409,89 +420,226 @@ class Peso:
 class Energia:
 
     @staticmethod
-    def obtener_tmb(sexo: str, edad: float):
-        ecuaciones = TMB[sexo]
+    def obtener_requerimiento(p: Persona):
+        if p.peso_para_calculos is None:
+            raise AttributeError(f'Persona con nombre: "{p.nombre}", debe definir el peso para calculos para obtener el requerimiento de energia.')
+        
+        tmb = Energia.obtener_tmb(p)(p.peso_para_calculos)
+        ree_base = tmb * p.naf_indice if p.edad > 10 and p.naf_indice is not None else tmb
+
+        ree_adicional = 0
+
+        
+        if p.esta_embarazada:
+            if p.mes_de_embarazo > 3: # En el primer tremestre no cambia 
+                ree_adicional += ENERGIA_ADICIONAL_EMBARAZDA_SEGUNDO_TRIMESTRE if p.mes_de_embarazo <= 6 else ENERGIA_ADICIONAL_EMBARAZDA_TERCER_TRIMESTRE
+
+        if p.esta_en_lactancia: 
+            ree_adicional += 505 if p.reservas_de_energia_maternales else 675        
+
+
+        ree = ree_base + ree_adicional
+        return {'ree': ree, 'unidad': 'kCal'}
+
+    @staticmethod
+    def obtener_tmb(p: Persona):
+        ecuaciones = TMB[p.sexo]
 
         for edad_maxima, ecuacion in ecuaciones.items():
-            if edad < edad_maxima:
+            if p.edad < edad_maxima:
                 return ecuacion
 
-        raise ValueError(f"No se encontró ecuación para edad {edad}")
+        raise ValueError(f"No se encontró ecuación para edad {p.edad}")
+
 
 
 class Proteina:
     @staticmethod
-    def obtener_requerimiento(sexo: str, edad: float) -> dict:
-        # De 0 a < 5 años no hay diferenciación por sexo
-        if edad < 5:
-            requerimientos = REQUERIMIENTOS_PROTEINA["todos"]
-        else:
-            requerimientos = REQUERIMIENTOS_PROTEINA[sexo]
+    def obtener_requerimiento(p: Persona) -> dict:
+        if p.peso_para_calculos is None:
+            raise AttributeError(f'Persona con nombre: "{p.nombre}", debe definir el peso para calculos para obtener el requerimiento de proteina.')
+
+        proteina_de_referencia_adicional = 0
+        proteina_dieta_mixta_adicional = 0
+
+        if p.esta_embarazada:
+            if 4 <= p.mes_de_embarazo <= 6:
+                proteina_de_referencia_adicional += PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE
+                proteina_dieta_mixta_adicional += PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE
+
+            elif 7 <= p.mes_de_embarazo <= 9:
+                proteina_de_referencia_adicional += PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE
+                proteina_dieta_mixta_adicional += PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE
+
+
+        if p.esta_en_lactancia:
+            if p.mes_de_lactancia <= 6:
+                proteina_de_referencia_adicional += PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE
+                proteina_dieta_mixta_adicional += PROTEINA_DIETA_MIXTA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE
+            elif p.mes_de_lactancia <= 12:
+                proteina_de_referencia_adicional += PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_SEGUNDO_SEMESTRE
+                proteina_dieta_mixta_adicional += PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_SEMESTRE
+        
+        requerimientos = REQUERIMIENTOS_PROTEINA["todos"] if p.edad < 5 else REQUERIMIENTOS_PROTEINA[p.sexo]
 
         for edad_maxima, requerimiento in requerimientos.items():
-            if edad < edad_maxima:
-                return requerimiento
+            if p.edad < edad_maxima:
+                return {
+                    'rpe': requerimiento['rpe_g_por_kg']*p.peso_para_calculos,
+                    'rdd_referencia':(requerimiento['rdd_referencia_g_por_kg']*p.peso_para_calculos)+proteina_de_referencia_adicional,
+                    'rdd_dieta_mixta':  (requerimiento['rdd_dieta_mixta_g_por_kg']*p.peso_para_calculos)+proteina_dieta_mixta_adicional if requerimiento['rdd_dieta_mixta_g_por_kg'] is not None else None,
+                    'unidad': 'g'
+                }
 
-        raise ValueError(f"No se encontró requerimiento de proteína para edad {edad} y sexo {sexo}")
+        raise ValueError(f"No se encontró requerimiento de proteína para edad {p.edad} y sexo {p.sexo}")
 
 
 class Lipidos:
 
     @staticmethod
-    def obtener_requerimiento(edad: float) -> dict:
-        for edad_maxima, requerimiento in REQUERIMIENTOS_LIPIDOS.items():
-            if edad < edad_maxima:
-                return requerimiento
-        raise ValueError(f"No se encontró requerimiento de lipidos para edad {edad}")   
-
-    @staticmethod
-    def porcentaje_energia_a_gramos(energia: float, porcentaje: float | None) -> float | None:
-        if porcentaje is None:
-            return None
-
-        return (energia * porcentaje / KCAL_POR_GRAMO_GRASA)
-
-
-class Carbohidratos:
-    @staticmethod
-    def obtener_requerimiento(edad: float) -> dict:
-        for edad_maxima, requerimiento in REQUERIMIENTOS_CARBOHIDRATOS.items():
-            if edad < edad_maxima:
-                return requerimiento
-
-        raise ValueError(f"No se encontró requerimiento de carbohidratos para edad {edad}")   
-
-
-class VitaminaA:
-    @staticmethod
     def obtener_requerimiento(p: Persona) -> dict:
 
-        if p.esta_en_lactancia:
-            return VITAMINA_A_LACTANCIA
+        for edad_maxima, requerimiento in RDD_LIPIDOS.items():
+            if p.edad < edad_maxima:
+                _requerimiento = requerimiento.copy()
+                _requerimiento['unidad'] = 'P/E'
+                return _requerimiento
+        raise ValueError(f"No se encontró requerimiento de lipidos para edad {p.edad}")   
 
-        if p.esta_embarazada:
-            return VITAMINA_A_EMBARAZO
+    @staticmethod
+    def obtener_requerimiento_gramos(p: Persona, ree: float):
+        requerimiento_pe = Lipidos.obtener_requerimiento(p)
+        requerimiento_gramos = {}
+        for ag, pe in requerimiento_pe.items():
+            if ag != 'unidad':
+                if pe is not None:
+                    requerimiento_gramos[ag] = pe * ree / KCAL_POR_GRAMO_GRASA
+                else:
+                    requerimiento_gramos[ag] = None
+        requerimiento_gramos['unidad'] = 'g'
+        return requerimiento_gramos 
+    
+    @staticmethod
+    def recomendacion_colesterol(p):
+        limite = None
+        if p.edad >= 2:
+            limite = RECOMENDACION_MAXIMO_COLESTEROL_MG
+        return {'maximo': limite, 'unidad': 'mg'}
 
-        if p.edad < 10:
-            requerimientos = REQUERIMIENTOS_VITAMINA_A["todos"]
+class Carbohidratos:  
+
+    @staticmethod
+    def obtener_requerimiento_gramos(p: Persona, ree: float):
+        rdd = None
+        unidad = 'g'
+        if p.edad > 6:
+            rdd = {'rdd_min': CARBOHIDRATOS_ENERGIA_MIN * ree / KCAL_POR_GRAMO_CARBOHIDRATO, 'rdd_max': CARBOHIDRATOS_ENERGIA_MAX * ree / KCAL_POR_GRAMO_CARBOHIDRATO } 
         else:
-            requerimientos = REQUERIMIENTOS_VITAMINA_A[p.sexo]
+            rdd = {'rdd_min': None, 'rdd_max': None } 
+
+        requerimiento_carbohidratos_adicional = 0
+        if p.esta_embarazada:
+            if 7 <= p.mes_de_embarazo <= 9:
+                requerimiento_carbohidratos_adicional += CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE
+
+        if p.esta_en_lactancia:
+            requerimiento_carbohidratos_adicional += CARBOHIDRATOS_ADICIONALES_LACTANCIA
+
+        for max_age, requerimiento in REQUERIMIENTOS_CARBOHIDRATOS.items():
+            if p.edad<max_age:
+                if requerimiento['ia'] is not None:
+                    _requerimiento = requerimiento.copy()
+                    _requerimiento['unidad'] = unidad
+                    return _requerimiento
+                else:
+                    return {
+                        'ia': None,
+                        'rpe': requerimiento['rpe'] + requerimiento_carbohidratos_adicional,
+                        'rdd_min': rdd['rdd_min'],
+                        'rdd_max': rdd['rdd_max'],
+                        'unidad': unidad
+                    }
+
+        raise ValueError(f"No se encontró requerimiento de carbos para edad {p.edad}")   
+
+    @staticmethod
+    def obtener_requerimiento_azucar_gramos(ree: float):
+        return {
+            'ia': None,
+            'rpe': None,
+            'rdd': AZUCARES_REFINADOS_ENERGIA_MAX * ree / KCAL_POR_GRAMO_CARBOHIDRATO,
+            'unidad': 'g'
+        }
+
+    @staticmethod
+    def obtener_requerimiento_fibra(p: Persona, ree: float):
+        if p.edad >= 1:
+            return {
+                'ia': None, 
+                'rpe': None, 
+                'rdd':  (ree / 1000 * GRAMOS_DE_FIBRA_POR_1000_KCAL),
+                'unidad': 'g'
+            }
+        else:
+            return {
+                'ia': None, 
+                'rpe': None, 
+                'rdd': None
+            }
+
+class VitaminaA:
+
+    CV = 0.2
+
+    @staticmethod
+    def calcular_rdd(rpe: float):
+        """
+        Aplica para niños, adolescentes y adultos. 
+
+        Usado para embarzadas y lactantes cuyo RPE es calculado en tiempo de ejecucion.
+        """
+        return rpe + 2 * (VitaminaA.CV * rpe)
+
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        requerimiento_adicional:int = 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS if p.esta_embarazada else 0
+        requerimiento_adicional += REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES if p.esta_en_lactancia else 0
+
+        requerimientos = REQUERIMIENTOS_VITAMINA_A["todos"] if p.edad < 10 else REQUERIMIENTOS_VITAMINA_A[p.sexo]
+        unidad = 'mcg EAR'
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return requerimiento
+                if requerimiento_adicional == 0:
+                    requerimiento_individuo = requerimiento.copy()
+                    requerimiento_individuo['unidad'] = unidad
+                    return requerimiento_individuo
+                else:
+                    new_requirment = {}
+                    new_requirment['unidad'] = unidad
+                    if requerimiento['ia'] is not None:
+                        # En casos reales inalcanzable, bebe embarazado? Lo dejo por si se expande el sistema y permite aumentar requerimiento del bebe por x o y motivo?
+                        new_requirment['ia'] = requerimiento.get('ia') + requerimiento_adicional
+                    else:
+                        if requerimiento['rpe'] is None:
+                            raise KeyError('Requerimiento no tiene RPE requerido para calculo.')
 
+                        new_requirment['rpe'] = requerimiento.get('rpe')
+                        new_requirment['rdd'] = VitaminaA.calcular_rdd(requerimiento['rpe']+requerimiento_adicional)
+                        return new_requirment
+                
         raise ValueError(f"No se encontró requerimiento de vitamina A para edad {p.edad} y sexo {p.sexo}")   
 
     @staticmethod
-    def obtener_imt(age: float) -> float:
+    def obtener_retinol_imt(age: float) -> float:
         """
         Corresponde especificamente a la parte de la vitamina de A proveniente del Retinol. 
         """
 
         for edad_maxima, maximo in IMT_RETINOL.items():
             if age < edad_maxima:
-                return maximo
+                return {"imt": maximo, 'unidad': 'mcg'}
 
         raise ValueError(f"No se encontró ingesta máxima tolerable de retinol para edad {age}")
 
@@ -556,12 +704,13 @@ class Niacina:
         requerimiento_adicional += REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS if p.esta_embarazada else 0
         requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA if p.esta_en_lactancia else 0      
         requerimientos = REQUERIMIENTOS_NIACINA["todos"] if p.edad < 10 else REQUERIMIENTOS_NIACINA[p.sexo]
+        unidad = 'mg EN'
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
                     requerimiento_individuo = requerimiento.copy()
-                    requerimiento_individuo['unidad'] = 'mg'
+                    requerimiento_individuo['unidad'] = unidad
                     return requerimiento_individuo
                 else:
                     new_requirment = {}
@@ -570,7 +719,7 @@ class Niacina:
                             new_requirment[idr] = value
                         else: 
                             new_requirment[idr] = value + requerimiento_adicional
-                    new_requirment['unidad'] = 'mg'
+                    new_requirment['unidad'] = unidad
                     return new_requirment
 
         raise ValueError(f"No se encontró un requerimiento apropiado de Niacina para el individuo")
@@ -808,83 +957,27 @@ class VitaminaK:
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     evaluacion_peso_resultado = Peso.evaluacion_peso(p)
-
-    peso_para_calculos = evaluacion_peso_resultado["peso_para_calculos"]
-
-    tmb_formula = Energia.obtener_tmb(p.sexo, p.edad)
-    tmb = tmb_formula(peso_para_calculos)
-
-    # REE = Requerimiento Estimado de Energía (INCAP),
-    
-    ree = tmb * p.naf_indice if p.edad > 10 and p.naf_indice is not None else tmb
+    p.peso_para_calculos = evaluacion_peso_resultado["peso_para_calculos"]
 
 
     """
     Energia
     """
-
-    if p.esta_embarazada:
-        if p.mes_de_embarazo > 3: # En el primer tremestre no cambia 
-            # Recomendación FAO/OMS/UNU:
-            # primer trimestre: sin incremento dietético
-            # segundo trimestre: +360 kcal/día
-            # tercer trimestre: +475 kcal/día
-            ree += 360 if p.mes_de_embarazo <= 6 else 475 # 360 para segundo trimestre; 475 para tercer trimeste 
-
-
-    if p.esta_en_lactancia: 
-        ree += 505 if p.reservas_de_energia_maternales else 675
+    recomendacion_energia = Energia.obtener_requerimiento(p)
+    ree =  recomendacion_energia['ree']
 
 
     """
     Proteina
     """
-    requerimiento_proteina = Proteina.obtener_requerimiento(p.sexo, p.edad)
-
-    proteina_embarazo = 0
-
-    if p.esta_embarazada:
-        if 4 <= p.mes_de_embarazo <= 6:
-            proteina_embarazo = 13
-        elif 7 <= p.mes_de_embarazo <= 9:
-            proteina_embarazo = 42
-
-    proteina_lactancia = 0
-
-    if p.esta_en_lactancia:
-        if p.mes_de_lactancia <= 6:
-            proteina_lactancia = 26
-        elif p.mes_de_lactancia <= 12:
-            proteina_lactancia = 18
-
+    requerimiento_proteina = Proteina.obtener_requerimiento(p)
 
     """
-    Carbohidratos
+    Carbohidratos, azucar y fibra
     """
-
-
-    requerimiento_carbohidratos = Carbohidratos.obtener_requerimiento(p.edad)
-    carbohidratos_minimos = requerimiento_carbohidratos["gramos_por_dia"]
-    azucares_refinados_max = None
-
-    if requerimiento_carbohidratos["tipo"] == "rpe":
-        if p.esta_embarazada:
-            carbohidratos_minimos += 33
-
-        if p.esta_en_lactancia:
-            carbohidratos_minimos += 60
-
-    if p.edad >= 1:
-        carbohydrate_energy_min = (ree * CARBOHIDRATOS_ENERGIA_MIN / KCAL_POR_GRAMO_CARBOHIDRATO )
-        azucares_refinados_max = (ree * AZUCARES_REFINADOS_ENERGIA_MAX / KCAL_POR_GRAMO_CARBOHIDRATO)
-        carbohydrate_energy_max = (ree * CARBOHIDRATOS_ENERGIA_MAX / KCAL_POR_GRAMO_CARBOHIDRATO )
-
-        carbohydrate_effective_min = max(carbohidratos_minimos, carbohydrate_energy_min )
-
-    else:
-        carbohydrate_energy_min = None
-        carbohydrate_energy_max = None
-        carbohydrate_effective_min = carbohidratos_minimos
+    requerimiento_carbohidratos = Carbohidratos.obtener_requerimiento_gramos(p, ree)
+    maximo_azucar = Carbohidratos.obtener_requerimiento_azucar_gramos(ree)
+    recomendacion_fibra = Carbohidratos.obtener_requerimiento_fibra(p, ree)
 
     """
     Fibra Dietetica
@@ -899,28 +992,15 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Lípidos
     """
 
-    requerimiento_lipidos = Lipidos.obtener_requerimiento(p.edad)
-
-    grasa_total_min = Lipidos.porcentaje_energia_a_gramos(ree, requerimiento_lipidos["grasa_total_porcentaje_min"])
-    grasa_total_max = Lipidos.porcentaje_energia_a_gramos(ree, requerimiento_lipidos["grasa_total_porcentaje_max"])
-    saturados_max = Lipidos.porcentaje_energia_a_gramos(ree, requerimiento_lipidos["saturados_porcentaje_max"])
-    poliinsaturados_min = Lipidos.porcentaje_energia_a_gramos(ree, requerimiento_lipidos["poliinsaturados_porcentaje_min"])
-    poliinsaturados_max = Lipidos.porcentaje_energia_a_gramos(ree, requerimiento_lipidos["poliinsaturados_porcentaje_max"])
-    colesterol_max = requerimiento_lipidos["colesterol_max_mg"]
+    requerimiento_lipidos = Lipidos.obtener_requerimiento_gramos(p, ree)
+    maximo_colesterol = Lipidos.recomendacion_colesterol(p)
     """
     Vitamina A
     """
 
     requerimiento_vitamina_a = VitaminaA.obtener_requerimiento(p)
+    imt_retinol = VitaminaA.obtener_retinol_imt(p.edad)
 
-    imt_vitamina_a = VitaminaA.obtener_imt(p.edad)
-
-    if requerimiento_vitamina_a["rdd"] is not None:
-        minimo_vitamina_a = requerimiento_vitamina_a["rdd"]
-        tipo_referencia_vitamina_a = "rdd"
-    else:
-        minimo_vitamina_a = requerimiento_vitamina_a["ia"]
-        tipo_referencia_vitamina_a = "ingesta_adecuada"
 
     """
     Tiamina
@@ -972,80 +1052,16 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     requerimiento_vitamina_k = VitaminaK.obtener_requerimiento(p)
 
     return {
-        "energia":{
-            "ree": ree,
-            "unidad": "kcal"
-        },
-        "proteina":{
-            'rpe': (requerimiento_proteina["rpe_g_por_kg"] * peso_para_calculos)+proteina_embarazo+proteina_lactancia,
-            'rdd':{
-                'dieta_de_referencia': (requerimiento_proteina["rdd_referencia_g_por_kg"] * peso_para_calculos)+proteina_embarazo+proteina_lactancia,
-                'dieta_mixta': (requerimiento_proteina["rdd_dieta_mixta_g_por_kg"] * peso_para_calculos)+proteina_embarazo+proteina_lactancia if requerimiento_proteina["rdd_dieta_mixta_g_por_kg"] is not None else None
-            },
-            "unidad": "g"
-
-        },
-        "carbohidratos": {
-            "idr": requerimiento_carbohidratos["tipo"],
-            "minimo_de_referencia": carbohidratos_minimos,
-
-            "distribucion_energia": {
-                "minimo_porcentaje": 45,
-                "maximo_porcentaje": 65,
-                "minimo_gramos": carbohydrate_energy_min,
-                "maximo_gramos": carbohydrate_energy_max,
-            },
-
-            "minimo_efectivo": carbohydrate_effective_min,
-            "maximo_efectivo": carbohydrate_energy_max,
-            "azucares_refinados": {
-                "maximo_porcentaje_energia": 10,
-                "maximo_gramos": azucares_refinados_max,
-            },
-            "unidad": "g",
-        },
-        "fibra": {
-            "minimo": fiber_requirement,
-            "referencia": "12_g_per_1000_kcal",
-            "unidad": "g"
-        },
-        "lipidos": {
-            "total": {
-                "minimo": grasa_total_min,
-                "maximo": grasa_total_max,
-                "unidad": "g",
-            },
-
-            "saturados": {
-                "maximo": saturados_max,
-                "unidad": "g",
-            },
-
-            "poliinsaturados": {
-                "minimo": poliinsaturados_min,
-                "maximo": poliinsaturados_max,
-                "unidad": "g",
-            },
-
-            "colesterol": {
-                "maximo": colesterol_max,
-                "unidad": "mg",
-            },
-        },
+        "energia": recomendacion_energia,
+        "proteina": requerimiento_proteina,
+        "carbohidratos": requerimiento_carbohidratos,
+        'azucar': maximo_azucar,
+        "fibra": recomendacion_fibra,
+        "lipidos": requerimiento_lipidos,
+        'colesterol': maximo_colesterol,
         "micronutrientes": {
-        "vitamina_a": {
-            "rpe": requerimiento_vitamina_a["rpe"],
-            "rdd": requerimiento_vitamina_a["rdd"],
-            "ia": requerimiento_vitamina_a["ia"],
-            "minimo_efectivo": minimo_vitamina_a,
-            "idr": tipo_referencia_vitamina_a,
-            "unidad": "ug_EAR",
-
-            "limite_retinol": {
-                "maximo": imt_vitamina_a,
-                "unidad": "ug_retinol",
-            },
-            },
+            "vitamina_a": requerimiento_vitamina_a,
+            "retinol": imt_retinol,
             "tiamina": requerimiento_tiamina,
             "riboflavina": requerimiento_riboflavina,
             "niacina": requerimiento_niacina,

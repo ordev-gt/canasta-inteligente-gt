@@ -58,6 +58,12 @@ TMB = {
         float("inf"): lambda peso: 9.082 * peso + 658.5,
     },
 }
+# Recomendación FAO/OMS/UNU:
+# primer trimestre: sin incremento dietético
+# segundo trimestre: +360 kcal/día
+# tercer trimestre: +475 kcal/día
+ENERGIA_ADICIONAL_EMBARAZDA_SEGUNDO_TRIMESTRE = 360
+ENERGIA_ADICIONAL_EMBARAZDA_TERCER_TRIMESTRE = 475
 
 """
 ####
@@ -79,49 +85,41 @@ PROTEINA
 REQUERIMIENTOS_PROTEINA = {
     "todos": {
         0.25: {
-            "peso_promedio_kg": 4.85,
             "rpe_g_por_kg": 1.32,
             "rdd_referencia_g_por_kg": 1.64,
             "rdd_dieta_mixta_g_por_kg": None,
         },
         0.5: {
-            "peso_promedio_kg": 6.67,
             "rpe_g_por_kg": 1.06,
             "rdd_referencia_g_por_kg": 1.25,
             "rdd_dieta_mixta_g_por_kg": None,
         },
         0.75: {
-            "peso_promedio_kg": 7.93,
             "rpe_g_por_kg": 1.12,
             "rdd_referencia_g_por_kg": 1.31,
             "rdd_dieta_mixta_g_por_kg": 1.76,
         },
         1: {
-            "peso_promedio_kg": 8.82,
             "rpe_g_por_kg": 1.12,
             "rdd_referencia_g_por_kg": 1.31,
             "rdd_dieta_mixta_g_por_kg": 1.76,
         },
         2: {
-            "peso_promedio_kg": 10.55,
             "rpe_g_por_kg": 0.95,
             "rdd_referencia_g_por_kg": 1.14,
             "rdd_dieta_mixta_g_por_kg": 1.54,
         },
         3: {
-            "peso_promedio_kg": 13.0,
             "rpe_g_por_kg": 0.79,
             "rdd_referencia_g_por_kg": 0.97,
             "rdd_dieta_mixta_g_por_kg": 1.31,
         },
         4: {
-            "peso_promedio_kg": 15.15,
             "rpe_g_por_kg": 0.73,
             "rdd_referencia_g_por_kg": 0.90,
             "rdd_dieta_mixta_g_por_kg": 1.21,
         },
         5: {
-            "peso_promedio_kg": 17.5,
             "rpe_g_por_kg": 0.69,
             "rdd_referencia_g_por_kg": 0.86,
             "rdd_dieta_mixta_g_por_kg": 1.16,
@@ -130,61 +128,51 @@ REQUERIMIENTOS_PROTEINA = {
 
     "hombre": {
         6: {
-            "peso_promedio_kg": 18.26,
             "rpe_g_por_kg": 0.69,
             "rdd_referencia_g_por_kg": 0.85,
             "rdd_dieta_mixta_g_por_kg": 1.14,
         },
         7: {
-            "peso_promedio_kg": 20.36,
             "rpe_g_por_kg": 0.72,
             "rdd_referencia_g_por_kg": 0.89,
             "rdd_dieta_mixta_g_por_kg": 1.20,
         },
         8: {
-            "peso_promedio_kg": 22.58,
             "rpe_g_por_kg": 0.74,
             "rdd_referencia_g_por_kg": 0.91,
             "rdd_dieta_mixta_g_por_kg": 1.23,
         },
         9: {
-            "peso_promedio_kg": 25.01,
             "rpe_g_por_kg": 0.75,
             "rdd_referencia_g_por_kg": 0.92,
             "rdd_dieta_mixta_g_por_kg": 1.24,
         },
         10: {
-            "peso_promedio_kg": 27.57,
             "rpe_g_por_kg": 0.75,
             "rdd_referencia_g_por_kg": 0.92,
             "rdd_dieta_mixta_g_por_kg": 1.24,
         },
         12: {
-            "peso_promedio_kg": 32,
             "rpe_g_por_kg": 0.75,
             "rdd_referencia_g_por_kg": 0.91,
             "rdd_dieta_mixta_g_por_kg": 1.23,
         },
         14: {
-            "peso_promedio_kg": 41,
             "rpe_g_por_kg": 0.74,
             "rdd_referencia_g_por_kg": 0.90,
             "rdd_dieta_mixta_g_por_kg": 1.21,
         },
         16: {
-            "peso_promedio_kg": 53,
             "rpe_g_por_kg": 0.72,
             "rdd_referencia_g_por_kg": 0.89,
             "rdd_dieta_mixta_g_por_kg": 1.19,
         },
         18: {
-            "peso_promedio_kg": 61,
             "rpe_g_por_kg": 0.71,
             "rdd_referencia_g_por_kg": 0.87,
             "rdd_dieta_mixta_g_por_kg": 1.16,
         },
         float("inf"): {
-            "peso_promedio_kg": 64,
             "rpe_g_por_kg": 0.66,
             "rdd_referencia_g_por_kg": 0.83,
             "rdd_dieta_mixta_g_por_kg": 1.12,
@@ -193,61 +181,51 @@ REQUERIMIENTOS_PROTEINA = {
 
     "mujer": {
         6: {
-            "peso_promedio_kg": 17.69,
             "rpe_g_por_kg": 0.69,
             "rdd_referencia_g_por_kg": 0.85,
             "rdd_dieta_mixta_g_por_kg": 1.14,
         },
         7: {
-            "peso_promedio_kg": 19.67,
             "rpe_g_por_kg": 0.72,
             "rdd_referencia_g_por_kg": 0.89,
             "rdd_dieta_mixta_g_por_kg": 1.20,
         },
         8: {
-            "peso_promedio_kg": 21.87,
             "rpe_g_por_kg": 0.74,
             "rdd_referencia_g_por_kg": 0.91,
             "rdd_dieta_mixta_g_por_kg": 1.23,
         },
         9: {
-            "peso_promedio_kg": 24.57,
             "rpe_g_por_kg": 0.75,
             "rdd_referencia_g_por_kg": 0.92,
             "rdd_dieta_mixta_g_por_kg": 1.24,
         },
         10: {
-            "peso_promedio_kg": 27.56,
             "rpe_g_por_kg": 0.75,
             "rdd_referencia_g_por_kg": 0.92,
             "rdd_dieta_mixta_g_por_kg": 1.24,
         },
         12: {
-            "peso_promedio_kg": 33,
             "rpe_g_por_kg": 0.74,
             "rdd_referencia_g_por_kg": 0.91,
             "rdd_dieta_mixta_g_por_kg": 1.22,
         },
         14: {
-            "peso_promedio_kg": 42,
             "rpe_g_por_kg": 0.72,
             "rdd_referencia_g_por_kg": 0.89,
             "rdd_dieta_mixta_g_por_kg": 1.19,
         },
         16: {
-            "peso_promedio_kg": 49,
             "rpe_g_por_kg": 0.70,
             "rdd_referencia_g_por_kg": 0.86,
             "rdd_dieta_mixta_g_por_kg": 1.16,
         },
         18: {
-            "peso_promedio_kg": 52,
             "rpe_g_por_kg": 0.68,
             "rdd_referencia_g_por_kg": 0.84,
             "rdd_dieta_mixta_g_por_kg": 1.12,
         },
         float("inf"): {
-            "peso_promedio_kg": 55,
             "rpe_g_por_kg": 0.66,
             "rdd_referencia_g_por_kg": 0.83,
             "rdd_dieta_mixta_g_por_kg": 1.12,
@@ -255,72 +233,91 @@ REQUERIMIENTOS_PROTEINA = {
     },
 }
 
+PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE = 10
+PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_TRIMESTRE = 13
+PROTEINA_DE_REFERENCIA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE = 31
+PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_TERCER_TRIMESTRE = 42
+
+PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE = 19
+PROTEINA_DIETA_MIXTA_ADICIONAL_LACTANCIA_PRIMER_SEMESTRE = 26
+PROTEINA_DE_REFERENCIA_ADICIONAL_LACTANCIA_SEGUNDO_SEMESTRE = 13
+PROTEINA_DIETA_MIXTA_ADICIONAL_EMBARAZO_SEGUNDO_SEMESTRE = 18
+
 """
 ####
 LIPIDOS
 ####
 """
 KCAL_POR_GRAMO_GRASA = 9
-REQUERIMIENTOS_LIPIDOS = {
+'''
+RADM = Rango Aceptable de distribucion de macronutrientes: Es la distribucion de macros asociada a un menor riesgo 
+de padecer enfermedades cronicas, al tiempo que asegura una ingesta suficiente. 
+'''
+RDD_LIPIDOS = {
     0.5:{ # 0 a 6 meses
-        "grasa_total_porcentaje_min": 0.40,
-        "grasa_total_porcentaje_max": 0.60,
-        "saturados_porcentaje_max": None,
-        "poliinsaturados_porcentaje_min": None,
-        "poliinsaturados_porcentaje_max": None,
-        "colesterol_max_mg": None,
+        "total_min": 0.40,
+        "total_max": 0.60,
+        "saturados_max": None,
+        "poliinsaturados_min": None,
+        "poliinsaturados_max": None,
+        "trans_max": None
     },
     2: {
-        "grasa_total_porcentaje_min": 0.30,
-        "grasa_total_porcentaje_max": 0.35,
-        "saturados_porcentaje_max": None,
-        "poliinsaturados_porcentaje_min": None,
-        "poliinsaturados_porcentaje_max": 0.15,
-        "colesterol_max_mg": None
+        "total_min": 0.30,
+        "total_max": 0.35,
+        "saturados_max": None,
+        "poliinsaturados_min": None,
+        "poliinsaturados_max": 0.15,
+        "trans_max": 0.01
     },
     19: {
-        "grasa_total_porcentaje_min": 0.25,
-        "grasa_total_porcentaje_max": 0.35,
-        "saturados_porcentaje_max": 0.08,
-        "poliinsaturados_porcentaje_min": None,
-        "poliinsaturados_porcentaje_max": 0.11,
-        "colesterol_max_mg": 300,
+        "total_min": 0.25,
+        "total_max": 0.35,
+        "saturados_max": 0.08,
+        "poliinsaturados_min": None,
+        "poliinsaturados_max": 0.11,
+        "trans_max": 0.01
+
     },
     float("inf"):{
-        "grasa_total_porcentaje_min": 0.20,
-        "grasa_total_porcentaje_max": 0.30,
-        "saturados_porcentaje_max": 0.10,
-        "poliinsaturados_porcentaje_min": 0.06,
-        "poliinsaturados_porcentaje_max": 0.11,
-        "colesterol_max_mg": 300,
+        "total_min": 0.20,
+        "total_max": 0.30,
+        "saturados_max": 0.10,
+        "poliinsaturados_min": 0.06,
+        "poliinsaturados_max": 0.11,
+        "trans_max": 0.01
     }
-
 }
+
+RECOMENDACION_MAXIMO_COLESTEROL_MG = 300
 
 """
 ####
 Carbohidratos
 ####
 """
-CARBOHIDRATOS_ENERGIA_MIN = 0.45
-CARBOHIDRATOS_ENERGIA_MAX = 0.65
+CARBOHIDRATOS_ENERGIA_MIN = 0.55
+CARBOHIDRATOS_ENERGIA_MAX = 0.70
 AZUCARES_REFINADOS_ENERGIA_MAX = 0.10
 KCAL_POR_GRAMO_CARBOHIDRATO = 4
 
 REQUERIMIENTOS_CARBOHIDRATOS = {
     0.5: {
-        "tipo": "ingesta_adecuada",
-        "gramos_por_dia": 60,
+        "ia": 60,
+        'rpe': None,
     },
     1: {
-        "tipo": "ingesta_adecuada",
-        "gramos_por_dia": 95,
+        "ia": 95,
+        'rpe': None,
     },
     float("inf"): {
-        "tipo": "rpe",
-        "gramos_por_dia": 100,
+        "ia": None,
+        "rpe": 100,
     },
 }
+CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE = 35
+CARBOHIDRATOS_ADICIONALES_LACTANCIA = 60
+
 
 """
 ####
@@ -403,22 +400,18 @@ REQUERIMIENTOS_VITAMINA_A = {
     "mujer": {
         12: {
             "rpe": 350,
-            "rdd": 500,
             "ia": None,
         },
         14: {
             "rpe": 400,
-            "rdd": 600,
             "ia": None,
         },
         18: {
             "rpe": 450,
-            "rdd": 650,
             "ia": None,
         },
         float("inf"): {
             "rpe": 450,
-            "rdd": 650,
             "ia": None,
         },
     },
@@ -431,15 +424,12 @@ IMT_RETINOL = {
     19: 2800,
     float("inf"): 3000,
 }
-VITAMINA_A_EMBARAZO = {
-    "rpe": 500,
-    "rdd": 700,
-    "ia": None,
-}
+
+REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS = 50
+REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES = 50
 
 VITAMINA_A_LACTANCIA = {
     "rpe": 825,
-    "rdd": 1000,
     "ia": None,
 }
 
