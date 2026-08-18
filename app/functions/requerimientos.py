@@ -976,35 +976,32 @@ Vitamina C
 """
 REQUERIMIENTOS_VITAMINA_C = {
     "todos": {
-        0.5: {"ia": 35, "rdd": None},
-        1:   {"ia": 50, "rdd": None},
-        4:   {"ia": None, "rdd": 15},
-        7:   {"ia": None, "rdd": 25},
-        10:  {"ia": None, "rdd": 35},
+        0.5: {"ia": 35, "rpe": None,"rdd": None},
+        1:   {"ia": 50,"rpe": None, "rdd": None},
+        4:   {"ia": None, "rpe": None,"rdd": 15},
+        7:   {"ia": None, "rpe": None,"rdd": 25},
+        10:  {"ia": None, "rpe": None,"rdd": 35},
     },
 
     "hombre": {
-        12: {"ia": None, "rdd": 40},
-        14: {"ia": None, "rdd": 50},
-        16: {"ia": None, "rdd": 60},
-        18: {"ia": None, "rdd": 70},
-        65: {"ia": None, "rdd": 75},
-        float("inf"): {"ia": None, "rdd": 75},
+        12: {"ia": None, "rpe": None,"rdd": 40},
+        14: {"ia": None, "rpe": None,"rdd": 50},
+        16: {"ia": None, "rpe": None,"rdd": 60},
+        18: {"ia": None, "rpe": None,"rdd": 70},
+        float("inf"): {"ia": None, "rpe": 60, "rdd": 75},
     },
 
     "mujer": {
-        12: {"ia": None, "rdd": 40},
-        14: {"ia": None, "rdd": 50},
-        16: {"ia": None, "rdd": 60},
-        18: {"ia": None, "rdd": 60},
-        65: {"ia": None, "rdd": 65},
-        float("inf"): {"ia": None, "rdd": 65},
+        12: {"ia": None, "rpe": None,"rdd": 40},
+        14: {"ia": None, "rpe": None,"rdd": 50},
+        16: {"ia": None, "rpe": None,"rdd": 60},
+        18: {"ia": None, "rpe": None,"rdd": 60},
+        float("inf"): {"ia": None, "rpe": 50,"rdd": 65},
     },
 }
 
-VITAMINA_C_EMBARAZO = {"ia": None, "rdd": 75}
-VITAMINA_C_LACTANCIA = {"ia": None, "rdd": 100}
-
+VITAMINA_C_ADICIONAL_EMBARAZO = 10
+VITAMINA_C_ADICIONAL_LACTANCIA = 35 
 """
 ####
 Vitamina D

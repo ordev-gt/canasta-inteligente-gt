@@ -17,7 +17,7 @@ from .requerimientos import (
     REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO, ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
-    VITAMINA_C_EMBARAZO, VITAMINA_C_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
+    VITAMINA_C_ADICIONAL_EMBARAZO, VITAMINA_C_ADICIONAL_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
     IA_VITAMINA_D, VITAMINA_D_EMBARAZO, VITAMINA_D_LACTANCIA, 
     REQUERIMIENTOS_VITAMINA_E, VITAMINA_E_EMBARAZO, VITAMINA_E_LACTANCIA, 
     REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
@@ -31,7 +31,7 @@ from .requerimientos import (
     CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA
     
     )
-
+from typing import Dict, AnyStr
 
 """
 Evaluación del peso corporal
@@ -836,29 +836,71 @@ class AcidoPantotenico:
 
 
 class VitaminaC:
+    CV = 0.1
+    @staticmethod
+    def calcular_rpe(rdd: float):
+        """
+        Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
+        """
+        return rdd - 2 * (VitaminaC.CV * rdd)
+
+    @staticmethod
+    def calcular_rdd(rpe: float):
+        """
+        Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
+        """
+        return rpe + 2 * (VitaminaC.CV * rpe)
+    
+    @staticmethod
+    def preprocesamiento_requerimientos_rdd_apartir_de_ree() -> Dict[AnyStr, Dict]:
+        requerimiento_preprocesados = {}
+        for sexo, requerimiento in REQUERIMIENTOS_VITAMINA_C.items():
+            requerimiento_preprocesados[sexo] = {}
+            for edad_maxima, idrs in requerimiento.items():
+                if idrs['ia'] is not None:
+                    requerimiento_preprocesados[sexo][edad_maxima] = idrs.copy()
+                elif idrs['rdd'] is not None:
+                    if idrs['rpe'] is None:
+                        _idrs = idrs.copy()
+                        _idrs['rpe'] = VitaminaC.calcular_rpe(idrs['rdd'])
+                        requerimiento_preprocesados[sexo][edad_maxima] = _idrs
+                    else:
+                        requerimiento_preprocesados[sexo][edad_maxima] = idrs.copy()
+                else:
+                    raise ValueError('No existe recomendacion valida')
+        
+        return requerimiento_preprocesados
 
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
 
+        requerimientos_vitamina_c = VitaminaC.preprocesamiento_requerimientos_rdd_apartir_de_ree()
+
+        requerimiento_adicional = 0
+
         if p.esta_en_lactancia:
-            return VITAMINA_C_LACTANCIA
+            requerimiento_adicional += VITAMINA_C_ADICIONAL_LACTANCIA
 
         if p.esta_embarazada:
-            return VITAMINA_C_EMBARAZO
+            requerimiento_adicional += VITAMINA_C_ADICIONAL_EMBARAZO
 
-        if p.edad < 10:
-            requerimientos = REQUERIMIENTOS_VITAMINA_C["todos"]
-        else:
-            requerimientos = REQUERIMIENTOS_VITAMINA_C[p.sexo]
+        requerimientos = requerimientos_vitamina_c["todos"] if p.edad < 10 else requerimientos_vitamina_c[p.sexo]
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return requerimiento
+                if requerimiento_adicional == 0:
+                    return requerimiento
+                else:
+                    if requerimiento['rpe'] is None:
+                        raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
+                    _requerimiento = requerimiento.copy()
+                    _rpe =  _requerimiento['rpe'] + requerimiento_adicional
+                    _rdd = VitaminaC.calcular_rdd(_rpe)
+                    _requerimiento['rpe'] = _rpe
+                    _requerimiento['rdd'] = _rdd
+                    return _requerimiento
 
-        raise ValueError(
-            f"No se encontró requerimiento de vitamina C "
-            f"para edad {p.edad} y sexo {p.sexo}"
-        )
+        raise ValueError(f"No se encontró requerimiento de vitamina C para edad {p.edad} y sexo {p.sexo}")
 
 class VitaminaD:
 
@@ -1055,6 +1097,28 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     """
     requerimiento_vitamina_k = VitaminaK.obtener_requerimiento(p)
 
+
+    """
+    Estandarizacion de Vitaminas pendientes:
+    - Vitamina C
+    - Vitamina D
+    - Vitamina E
+    - Vitamina K
+    Minerales pendientes:
+
+    - Calcio
+    - Fosforo
+    - Magensio
+    - Hierro 
+    - Zinc
+    - Cobre
+    - Selenio
+
+    Electrolitos
+    - Sodio
+    - Potasio 
+    """
+
     return {
         "energia": recomendacion_energia,
         "proteina": requerimiento_proteina,
@@ -1078,12 +1142,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "vitamina_b12": requerimientos_vitaminab12,
 
             "acido_pantotenico": requerimiento_acido_pantotenico,
-            "vitamina_c": {
-                "ia": requerimiento_vitamina_c,
-                "minimo_efectivo": requerimiento_vitamina_c,
-                "idr": "ingesta_adecuada",
-                "unidad": "mg",
-            },
+            "vitamina_c": requerimiento_vitamina_c,
 
             "vitamina_d": evaluacion_vitamina_d,
 
