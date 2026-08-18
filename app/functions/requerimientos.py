@@ -1039,35 +1039,55 @@ Vitamina E
 
 REQUERIMIENTOS_VITAMINA_E = {
     "todos": {
-        0.5: {"ia":4, "rdd": None},
-        1: {"ia":5, "rdd": None},
-        4: {"ia":None, "rdd": 5},
-        7: {"ia":None, "rdd": 6},
-        10: {"ia":None, "rdd": 8},
+        0.5: {"ia":4, 'rpe': None, "rdd": None},
+        1: {"ia":5, 'rpe': None, "rdd": None},
+        4: {"ia":None, 'rpe': None, "rdd": 5},
+        7: {"ia":None, 'rpe': None, "rdd": 6},
+        10: {"ia":None, 'rpe': None, "rdd": 8},
     },
 
     "hombre": {
-        12: 9,
-        14: 10,
-        16: 13,
-        18: 14,
-        65: 15,
-        float("inf"): 15,
+        12: {"ia":None, 'rpe': None,'rdd':9 },
+        14: {"ia":None, 'rpe': None,'rdd':10 },
+        16: {"ia":None, 'rpe': None,'rdd':13 },
+        18: {"ia":None, 'rpe': None,'rdd':14 },
+        65: {"ia":None, 'rpe': None,'rdd':15 },
+        float("inf"): {"ia":None, 'rpe': None,'rdd':15 },
     },
 
     "mujer": {
-        12: 11,
-        14: 13,
-        16: 14,
-        18: 15,
-        65: 15,
-        float("inf"): 15,
+        12: {"ia":None, 'rpe': None,'rdd':11 },
+        14: {"ia":None, 'rpe': None,'rdd':13 },
+        16: {"ia":None, 'rpe': None,'rdd':14 },
+        18: {"ia":None, 'rpe': None,'rdd':15 },
+        65: {"ia":None, 'rpe': None,'rdd':15 },
+        float("inf"): {"ia":None, 'rpe': None,'rdd':15 },
     },
 }
 
+REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES = 4
+
 VITAMINA_E_EMBARAZO = 15
 VITAMINA_E_LACTANCIA = 19
+"""
+Food and Nutrition Board / Institute of Medicine
+https://www.nationalacademies.org/read/9810/chapter/8#258
 
+Pagina 258. 
+
+Fuente 55 de recomendaciones. 
+Para mayor precision en los rangos de edades para IMT
+
+
+"""
+IMT_VITAMINA_E = {
+    1: None, 
+    3: 200, 
+    8: 300, 
+    13: 600, 
+    18: 800, 
+    float('inf'): 1000
+}
 
 """
 ####

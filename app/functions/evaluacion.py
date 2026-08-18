@@ -28,7 +28,8 @@ from .requerimientos import (
     REQUERIMIENTOS_FOLATOS, REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA, IMT_FOLATO_SINTETICO,
     REQUERIMIENTOS_VITAMINAB12, REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO, REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES,
-    CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA
+    CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA,
+    REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES
     
     )
 from typing import Dict, AnyStr
@@ -724,7 +725,6 @@ class Niacina:
 
         raise ValueError(f"No se encontró un requerimiento apropiado de Niacina para el individuo")
 
-
 class VitaminaB6:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> dict:
@@ -842,7 +842,7 @@ class VitaminaC:
         """
         Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
         """
-        return rdd - 2 * (VitaminaC.CV * rdd)
+        return rdd / (2 * VitaminaC.CV + 1)
 
     @staticmethod
     def calcular_rdd(rpe: float):
@@ -852,7 +852,7 @@ class VitaminaC:
         return rpe + 2 * (VitaminaC.CV * rpe)
     
     @staticmethod
-    def preprocesamiento_requerimientos_rdd_apartir_de_ree() -> Dict[AnyStr, Dict]:
+    def preprocesamiento_requerimientos_rpe_apartir_de_rdd() -> Dict[AnyStr, Dict]:
         requerimiento_preprocesados = {}
         for sexo, requerimiento in REQUERIMIENTOS_VITAMINA_C.items():
             requerimiento_preprocesados[sexo] = {}
@@ -874,9 +874,7 @@ class VitaminaC:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
 
-
-
-        requerimientos_vitamina_c = VitaminaC.preprocesamiento_requerimientos_rdd_apartir_de_ree()
+        requerimientos_vitamina_c = VitaminaC.preprocesamiento_requerimientos_rpe_apartir_de_rdd()
         unidad = 'mg'
         requerimiento_adicional = 0
 
@@ -930,32 +928,69 @@ class VitaminaD:
 
         return {'imt': IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD, 'unidad':unidad } # niños y adultos
             
-
 class VitaminaE:
+
+    CV = 0.10
+
+    def calcular_rpe(rdd: float):
+        """
+        Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
+        """
+        return rdd / (2 * VitaminaE.CV + 1)
+
+    @staticmethod
+    def calcular_rdd(rpe: float):
+        """
+        Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
+        """
+        return rpe + 2 * (VitaminaE.CV * rpe)
+
+    @staticmethod
+    def preprocesamiento_requerimientos_rpe_apartir_de_rdd() -> Dict[AnyStr, Dict]:
+        requerimiento_preprocesados = {}
+        for sexo, requerimiento in REQUERIMIENTOS_VITAMINA_E.items():
+            requerimiento_preprocesados[sexo] = {}
+            for edad_maxima, idrs in requerimiento.items():
+                if idrs['ia'] is not None:
+                    requerimiento_preprocesados[sexo][edad_maxima] = idrs.copy()
+                elif idrs['rdd'] is not None:
+                    if idrs['rpe'] is None:
+                        _idrs = idrs.copy()
+                        _idrs['rpe'] = VitaminaE.calcular_rpe(idrs['rdd'])
+                        requerimiento_preprocesados[sexo][edad_maxima] = _idrs
+                    else:
+                        requerimiento_preprocesados[sexo][edad_maxima] = idrs.copy()
+                else:
+                    raise ValueError('No existe recomendacion valida')
+        
+        return requerimiento_preprocesados
 
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mg'
+        requerimientos_vitamina_c = VitaminaE.preprocesamiento_requerimientos_rpe_apartir_de_rdd()
+        requerimiento_adicional = REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES if p.esta_en_lactancia else 0
 
-        if p.esta_en_lactancia:
-            return VITAMINA_E_LACTANCIA
-
-        if p.esta_embarazada:
-            return VITAMINA_E_EMBARAZO
-
-        if p.edad < 10:
-            requerimientos = REQUERIMIENTOS_VITAMINA_E["todos"]
-        else:
-            requerimientos = REQUERIMIENTOS_VITAMINA_E[p.sexo]
+        requerimientos = requerimientos_vitamina_c["todos"] if p.edad < 10 else requerimientos_vitamina_c[p.sexo]
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return requerimiento
+                if requerimiento_adicional == 0:
+                    _requerimiento = requerimiento.copy()
+                    _requerimiento['unidad'] = unidad
+                    return requerimiento
+                else:
+                    if requerimiento['rpe'] is None:
+                        raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
+                    _requerimiento = requerimiento.copy()
+                    _rpe =  _requerimiento['rpe'] + requerimiento_adicional
+                    _rdd = VitaminaC.calcular_rdd(_rpe)
+                    _requerimiento['rpe'] = _rpe
+                    _requerimiento['rdd'] = _rdd
+                    _requerimiento['unidad'] = unidad
+                    return _requerimiento
 
-        raise ValueError(
-            f"No se encontró requerimiento de vitamina E "
-            f"para edad {p.edad} y sexo {p.sexo}"
-        )
-
+        raise ValueError(f"No se encontró requerimiento de vitamina C para edad {p.edad} y sexo {p.sexo}")
 
 class VitaminaK:
 
@@ -1084,8 +1119,6 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     """
     Estandarizacion de Vitaminas pendientes:
-    - Vitamina C
-    - Vitamina D
     - Vitamina E
     - Vitamina K
     Minerales pendientes:
@@ -1128,12 +1161,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "vitamina_c": requerimiento_vitamina_c,
             "vitamina_d": requerimiento_e_imt_vitamina_d,
 
-            "vitamina_e": {
-                "ia": requerimiento_vitamina_e,
-                "minimo_efectivo": requerimiento_vitamina_e,
-                "idr": "ingesta_adecuada",
-                "unidad": "mg_alfa_tocoferol",
-            },
+            "vitamina_e": requerimiento_vitamina_e,
 
             "vitamina_k": {
                 "ia": requerimiento_vitamina_k,
