@@ -15,7 +15,7 @@ from .requerimientos import (
     RDD_LIPIDOS, RECOMENDACION_MAXIMO_COLESTEROL_MG,REQUERIMIENTOS_CARBOHIDRATOS, KCAL_POR_GRAMO_GRASA, CARBOHIDRATOS_ENERGIA_MIN, 
     CARBOHIDRATOS_ENERGIA_MAX, AZUCARES_REFINADOS_ENERGIA_MAX, KCAL_POR_GRAMO_CARBOHIDRATO,
     REQUERIMIENTOS_VITAMINA_A, IMT_RETINOL, 
-    IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_EMBARAZO, ACIDO_PANTOTENICO_LACTANCIA,
+    IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO, ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_EMBARAZO, VITAMINA_C_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
     IA_VITAMINA_D, VITAMINA_D_EMBARAZO, VITAMINA_D_LACTANCIA, 
@@ -819,20 +819,18 @@ class AcidoPantotenico:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> dict:
 
+        acido_adicional = 0
         if p.esta_en_lactancia:
-            return ACIDO_PANTOTENICO_LACTANCIA
+            acido_adicional += ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA
 
         if p.esta_embarazada:
-            return ACIDO_PANTOTENICO_EMBARAZO
+            acido_adicional +=  ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO
 
-        if p.edad < 10:
-            requerimientos = IA_ACIDO_PANTOTENICO["todos"]
-        else:
-            requerimientos = IA_ACIDO_PANTOTENICO[p.sexo]
+        requerimientos = IA_ACIDO_PANTOTENICO["todos"] if p.edad < 10 else IA_ACIDO_PANTOTENICO[p.sexo]
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return requerimiento
+                return {'ia': requerimiento, 'rpe': None, 'rdd': None, 'unidad': 'mg'}
 
         raise ValueError(f"No se encontraron requerimientos de ácido pantoténico {p.edad} y sexo {p.sexo}")
 
@@ -1079,12 +1077,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
             "vitamina_b12": requerimientos_vitaminab12,
 
-            "acido_pantotenico": {
-                "ia": requerimiento_acido_pantotenico,
-                "minimo_efectivo": requerimiento_acido_pantotenico,
-                "idr": "ingesta_adecuada",
-                "unidad": "mg",
-            },
+            "acido_pantotenico": requerimiento_acido_pantotenico,
             "vitamina_c": {
                 "ia": requerimiento_vitamina_c,
                 "minimo_efectivo": requerimiento_vitamina_c,

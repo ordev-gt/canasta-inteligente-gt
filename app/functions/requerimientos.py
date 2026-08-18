@@ -957,18 +957,16 @@ IA_ACIDO_PANTOTENICO = {
     "hombre": {
         12:  3.0,
         14:  4.0,
-        18: 5.0,
         float("inf"):  5.0,
     },
     "mujer": {
         12: 4.0 ,
         14: 4.0,
-        18: 5.0,
         float("inf"):  5.0,
     },
 }
-ACIDO_PANTOTENICO_EMBARAZO = 6.0
-ACIDO_PANTOTENICO_LACTANCIA = 7.0
+ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO = 1
+ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA = 1
 
 
 """
