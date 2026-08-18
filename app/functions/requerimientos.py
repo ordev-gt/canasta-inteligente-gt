@@ -1008,19 +1008,28 @@ Vitamina D
 ####
 """
 
-IA_VITAMINA_D = {
-    50: 5,
-    70: 10,
-    float("inf"): 15,
-}
+REQUERIMIENTOS_VITAMINA_D = {
+    50: {
+        'ia': 5,
+        'rpe': None, 
+        'rdd': None
+    },
+    70: {
+        'ia': 10,
+        'rpe': None, 
+        'rdd': None
+    },
+    float('inf'): {
+        'ia': 15,
+        'rpe': None, 
+        'rdd': None
+    },
+    
 
-VITAMINA_D_EMBARAZO = 5
-VITAMINA_D_LACTANCIA = 5
+} 
+IMT_LACTANTE_SUPLEMENTO_VITAMINAD = 25
+IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD = 50
 
-LIMITE_SUPERIOR_VITAMINA_D = {
-    1: 25,               # lactantes
-    float("inf"): 50,    # niños y adultos
-}
 
 """
 ####

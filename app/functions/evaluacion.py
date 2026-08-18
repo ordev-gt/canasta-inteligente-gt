@@ -18,7 +18,7 @@ from .requerimientos import (
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO, ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_ADICIONAL_EMBARAZO, VITAMINA_C_ADICIONAL_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
-    IA_VITAMINA_D, VITAMINA_D_EMBARAZO, VITAMINA_D_LACTANCIA, 
+    REQUERIMIENTOS_VITAMINA_D, IMT_LACTANTE_SUPLEMENTO_VITAMINAD, IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD,
     REQUERIMIENTOS_VITAMINA_E, VITAMINA_E_EMBARAZO, VITAMINA_E_LACTANCIA, 
     REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
     REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
@@ -874,8 +874,10 @@ class VitaminaC:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
 
-        requerimientos_vitamina_c = VitaminaC.preprocesamiento_requerimientos_rdd_apartir_de_ree()
 
+
+        requerimientos_vitamina_c = VitaminaC.preprocesamiento_requerimientos_rdd_apartir_de_ree()
+        unidad = 'mg'
         requerimiento_adicional = 0
 
         if p.esta_en_lactancia:
@@ -889,6 +891,8 @@ class VitaminaC:
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
+                    _requerimiento = requerimiento.copy()
+                    _requerimiento['unidad'] = unidad
                     return requerimiento
                 else:
                     if requerimiento['rpe'] is None:
@@ -898,6 +902,7 @@ class VitaminaC:
                     _rdd = VitaminaC.calcular_rdd(_rpe)
                     _requerimiento['rpe'] = _rpe
                     _requerimiento['rdd'] = _rdd
+                    _requerimiento['unidad'] = unidad
                     return _requerimiento
 
         raise ValueError(f"No se encontró requerimiento de vitamina C para edad {p.edad} y sexo {p.sexo}")
@@ -905,48 +910,27 @@ class VitaminaC:
 class VitaminaD:
 
     @staticmethod
-    def obtener_ia(p: Persona) -> float:
-
-        if p.esta_embarazada or p.esta_en_lactancia:
-            return 5
-
-        if p.edad < 50:
-            return 5
-
-        if p.edad <= 70:
-            return 10
-
-        return 15
+    def obtener_requerimiento(p: Persona) -> dict: 
+        unidad = 'mcg'
+        for maximo_edad, requerimiento in REQUERIMIENTOS_VITAMINA_D.items():
+            if p.edad < maximo_edad:
+                _requerimiento = requerimiento.copy()
+                _requerimiento['unidad'] = unidad
+                return _requerimiento
 
     @staticmethod
-    def obtener_limite_superior(p: Persona) -> float:
-        return 25 if p.edad < 1 else 50
+    def obtener_imt(p: Persona):
+        unidad = 'mcg'
+        if p.edad < 1:
+            return {'imt': None, 'unidad':unidad }
 
-    @staticmethod
-    def evaluar(p: Persona) -> dict:
+        if p.esta_en_lactancia:
+            return {'imt': IMT_LACTANTE_SUPLEMENTO_VITAMINAD, 'unidad':unidad }
 
-        ia = VitaminaD.obtener_ia(p)
-        maximo = VitaminaD.obtener_limite_superior(p)
 
-        # INCAP mantiene explícitamente la recomendación
-        # dietética en niños pequeños y adultos mayores.
-        requiere_fuente_dietetica = (
-            p.edad < 4
-            or p.edad > 50
-            or p.esta_embarazada
-            or p.esta_en_lactancia
-            or not p.exposicion_solar_suficiente
-        )
+        return {'imt': IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD, 'unidad':unidad } # niños y adultos
+            
 
-        return {
-            "ia": ia,
-            "minimo_efectivo": ia if requiere_fuente_dietetica else None,
-            "idr": "ingesta_adecuada",
-            "requiere_fuente_dietetica": requiere_fuente_dietetica,
-            "exposicion_solar_suficiente": p.exposicion_solar_suficiente,
-            "maximo": maximo,
-            "unidad": "ug",
-        }
 class VitaminaE:
 
     @staticmethod
@@ -1085,7 +1069,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     """
     Vitamina D
     """
-    evaluacion_vitamina_d = VitaminaD.evaluar(p)
+    requerimiento_e_imt_vitamina_d = VitaminaD.obtener_requerimiento(p) | VitaminaD.obtener_imt(p) 
 
     """
     Vitamina E
@@ -1140,11 +1124,9 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "folato_sintetico":imt_folato_sintetico,
 
             "vitamina_b12": requerimientos_vitaminab12,
-
             "acido_pantotenico": requerimiento_acido_pantotenico,
             "vitamina_c": requerimiento_vitamina_c,
-
-            "vitamina_d": evaluacion_vitamina_d,
+            "vitamina_d": requerimiento_e_imt_vitamina_d,
 
             "vitamina_e": {
                 "ia": requerimiento_vitamina_e,
