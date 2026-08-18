@@ -777,12 +777,17 @@ class Folatos:
                             new_requirment[idr] = value
                         else: 
                             new_requirment[idr] = value + requerimiento_adicional
-                    new_requirment['folato_sintetico'] = {'imt':imt, 'unidad': 'mcg'}
+                    
                     new_requirment['unidad'] = 'mcg EFD'
                     return new_requirment
 
         raise ValueError(f"No se encontró un requerimiento apropiado de Folato para el individuo")
 
+    @staticmethod
+    def obtener_imt_folato_sintetico(p):
+        imt = [imt for edad_maxima, imt in IMT_FOLATO_SINTETICO.items() if p.edad < edad_maxima][0]
+        return {'imt':imt, 'unidad': 'mcg'}
+    
 class VitaminaB12:
     @staticmethod
     def obtener_requerimiento(p:Persona):
@@ -1022,6 +1027,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Folatos
     """
     requerimiento_folatos = Folatos.obtener_requerimiento(p)
+    imt_folato_sintetico = Folatos.obtener_imt_folato_sintetico(p)
     """
     Vitamina B12
     """
@@ -1062,12 +1068,14 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
         "micronutrientes": {
             "vitamina_a": requerimiento_vitamina_a,
             "retinol": imt_retinol,
+
             "tiamina": requerimiento_tiamina,
             "riboflavina": requerimiento_riboflavina,
             "niacina": requerimiento_niacina,
             "vitamina_b6": requerimiento_vitaminab6,
 
             "folatos": requerimiento_folatos,
+            "folato_sintetico":imt_folato_sintetico,
 
             "vitamina_b12": requerimientos_vitaminab12,
 
