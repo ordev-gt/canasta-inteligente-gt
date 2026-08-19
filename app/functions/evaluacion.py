@@ -33,7 +33,8 @@ from .requerimientos import (
     IMT_VITAMINA_E,
     INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO,
     REQUERIMIENTO_FOSFORO,
-    REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO
+    REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO,
+    REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA
     
     )
 from typing import Dict, AnyStr
@@ -763,7 +764,6 @@ class Folatos:
         requerimiento_adicional += REQUERIMIENTO_ADICIONAL_FOLATOS_EMBARAZADAS if p.esta_embarazada else 0
         requerimiento_adicional += REQUERIMIENTOS_ADICIONAL_FOLATOS_LACTANCIA if p.esta_en_lactancia else 0      
         requerimientos = REQUERIMIENTOS_FOLATOS["todos"] if p.edad < 10 else REQUERIMIENTOS_FOLATOS[p.sexo]
-        imt = [imt for edad_maxima, imt in IMT_FOLATO_SINTETICO.items() if p.edad < edad_maxima][0]
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
@@ -1057,6 +1057,33 @@ class Magensio:
                 rdd = Magensio.calcular_rdd(rpe)
                 return {'ia': None, 'rpe': rpe, 'rdd': rdd, 'unidad': unidad}
 
+class Hierro:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mg'
+        requerimiento_adicional = 0
+        if p.esta_embarazada:
+            if p.mes_de_embarazo > 3:
+                requerimiento_adicional += REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE if p.mes_de_embarazo < 6 else REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE
+
+        if p.esta_en_lactancia:
+            requerimiento_adicional += REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA
+
+        requerimientos = REQUERIMIENTOS_HIERRO["todos"] if p.edad < 9 else REQUERIMIENTOS_HIERRO[p.sexo]
+
+        for max_age, requerimiento in requerimientos.items():
+            if p.edad < max_age:
+                if requerimiento_adicional == 0:
+                    return requerimiento | {'unidad': unidad}
+                else: 
+                    _requerimiento = {}
+                    for biodisponibilidad, i_requerimiento in requerimiento:
+                        i_requerimiento_modif_req_adicional = i_requerimiento.copy()
+                        i_requerimiento_modif_req_adicional['rpe'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rpe') 
+                        i_requerimiento_modif_req_adicional['rdd'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rdd') 
+                        _requerimiento[biodisponibilidad] = i_requerimiento_modif_req_adicional.copy()
+                    return _requerimiento | {'unidad': unidad}
+        raise ValueError(f'No se encontro requerimiento de Hierro para edad {p.edad}')
 
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
@@ -1157,14 +1184,15 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Magnesio
     """
     requerimiento_magnesio = Magensio.obtener_requerimiento(p)
+    """
+    Hierro
+    """
+    requerimiento_hierro = Hierro.obtener_requerimiento(p)
 
     """
     Estandarizacion de Vitaminas pendientes:
 
     Minerales pendientes:
-
-    - Magensio
-    - Hierro 
     - Zinc
     - Cobre
     - Selenio
@@ -1207,6 +1235,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             'calcio': requerimiento_calcio,
             'fosforo': requerimiento_fosforo,
             'magnesio': requerimiento_magnesio,
+            'hierro': requerimiento_hierro,
 
         }
         

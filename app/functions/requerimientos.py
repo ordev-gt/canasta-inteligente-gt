@@ -1221,3 +1221,234 @@ REQUERIMIENTO_MAGNESIO_POR_KG = {
 }
 
 RPE_ADICIONAL_EMBARAZADAS_MAGNESIO = 35
+
+"""
+Hierro pg 158 pdf
+"""
+REQUERIMIENTOS_HIERRO = {
+
+    'todos': {
+        0.5: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+        },
+
+        1: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 4.6,
+                'rdd': 6.0,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.9,
+                'rdd': 9.0,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+        },
+
+        3: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 3.6,
+                'rdd': 4.7,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.4,
+                'rdd': 7.0,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 10.8,
+                'rdd': 14.0,
+            },
+        },
+
+        6: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.8,
+                'rdd': 7.5,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.7,
+                'rdd': 11.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 17.4,
+                'rdd': 22.6,
+            },
+        },
+        9: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.8,
+                'rdd': 8.8,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 10.2,
+                'rdd': 13.2,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 20.3,
+                'rdd': 26.4,
+            },
+        },
+    },
+
+    'hombre': {
+        14: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 7.7,
+                'rdd': 10.1,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 11.6,
+                'rdd': 15.1,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 23.2,
+                'rdd': 30.2,
+            },
+        },
+
+        18: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.4,
+                'rdd': 10.9,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 12.6,
+                'rdd': 16.4,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 25.2,
+                'rdd': 32.8,
+            },
+        },
+
+        float('inf'): {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.7,
+                'rdd': 7.5,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.6,
+                'rdd': 11.2,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 17.2,
+                'rdd': 22.4,
+            },
+        },
+    },
+
+    'mujer': {
+        14: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.2,
+                'rdd': 8.1,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 9.3,
+                'rdd': 12.1,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 18.6,
+                'rdd': 24.2,
+            },
+        },
+
+        18: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.3,
+                'rdd': 10.8,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 12.5,
+                'rdd': 16.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 25.0,
+                'rdd': 32.5,
+            },
+        },
+
+        50: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.0,
+                'rdd': 10.4,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 12.0,
+                'rdd': 15.6,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 24.0,
+                'rdd': 31.2,
+            },
+        },
+
+        float('inf'): {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 4.5,
+                'rdd': 5.8,
+            },
+            'media_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.7,
+                'rdd': 8.7,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 13.4,
+                'rdd': 17.4,
+            },
+        },
+    },
+
+}
+REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE = 4.7
+REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE = 5.6
+REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA = 0.3
