@@ -1183,3 +1183,41 @@ REQUERIMIENTO_FOSFORO = {
 """
 Magnesio pg 155 pdf
 """
+
+
+REQUERIMIENTO_MAGNESIO_INFANTES = {
+    0.5: {
+        'ia': 100,
+        'rpe': None,
+        'rdd': None,
+    },
+    1: {
+        'ia': 275,
+        'rpe': None,
+        'rdd': None,
+    },
+}
+
+"""
+Requerimiento de adultos de FAO/OMS (2004). 
+"""
+
+REQUERIMIENTO_MAGNESIO_POR_KG = {
+    9: {
+        'ia': None,
+        'rpe_por_kg': 5,
+        'rdd': None
+    },
+    18: {
+        'ia': None, 
+        'rpe_por_kg': 5.3,
+        'rdd': None
+    },
+    float('inf'): {
+        'ia': None, 
+        'rpe_por_kg': 4,
+        'rdd': None
+    },
+}
+
+RPE_ADICIONAL_EMBARAZADAS_MAGNESIO = 35

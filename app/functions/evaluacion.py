@@ -32,7 +32,8 @@ from .requerimientos import (
     REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES,
     IMT_VITAMINA_E,
     INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO,
-    REQUERIMIENTO_FOSFORO
+    REQUERIMIENTO_FOSFORO,
+    REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO
     
     )
 from typing import Dict, AnyStr
@@ -455,8 +456,6 @@ class Energia:
 
         raise ValueError(f"No se encontró ecuación para edad {p.edad}")
 
-
-
 class Proteina:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> dict:
@@ -496,7 +495,6 @@ class Proteina:
                 }
 
         raise ValueError(f"No se encontró requerimiento de proteína para edad {p.edad} y sexo {p.sexo}")
-
 
 class Lipidos:
 
@@ -817,7 +815,6 @@ class VitaminaB12:
 
         raise ValueError(f"No se encontró un requerimiento apropiado de VitaminaB12 para el individuo")
 
-
 class AcidoPantotenico:
     @staticmethod
     def obtener_requerimiento(p: Persona) -> dict:
@@ -836,7 +833,6 @@ class AcidoPantotenico:
                 return {'ia': requerimiento, 'rpe': None, 'rdd': None, 'unidad': 'mg'}
 
         raise ValueError(f"No se encontraron requerimientos de ácido pantoténico {p.edad} y sexo {p.sexo}")
-
 
 class VitaminaC:
     CV = 0.1
@@ -1036,6 +1032,32 @@ class Fosforo:
                 return _requerimiento
         raise ValueError(f'No se encontro requerimiento de fosforo para edad {p.edad}')
 
+class Magensio:
+    CV = 0.1
+
+    @staticmethod
+    def calcular_rdd(rpe: float):
+        """
+        Tabla del Recomendaciones no incluye RPE para la mayoria de los casos, es necesario calcularlo indicanco 
+        """
+        return rpe + 2 * (Magensio.CV * rpe)
+
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mg'
+        if p.edad < 1:
+            _requerimiento = REQUERIMIENTO_MAGNESIO_INFANTES[0.5].copy()if p.edad < 0.5 else REQUERIMIENTO_MAGNESIO_INFANTES[1].copy()
+            return _requerimiento | {'unidad': unidad}
+
+        requerimiento_adicional = RPE_ADICIONAL_EMBARAZADAS_MAGNESIO if p.esta_embarazada else 0
+
+        for max_age, requerimiento in REQUERIMIENTO_MAGNESIO_POR_KG.items():
+            if p.edad < max_age:
+                rpe  = (requerimiento['rpe_por_kg'] * p.peso_para_calculos) + requerimiento_adicional
+                rdd = Magensio.calcular_rdd(rpe)
+                return {'ia': None, 'rpe': rpe, 'rdd': rdd, 'unidad': unidad}
+
+
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
@@ -1131,6 +1153,10 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Fosforo
     """
     requerimiento_fosforo = Fosforo.obtener_requerimiento(p)
+    """
+    Magnesio
+    """
+    requerimiento_magnesio = Magensio.obtener_requerimiento(p)
 
     """
     Estandarizacion de Vitaminas pendientes:
@@ -1180,7 +1206,8 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
         "minerales": {
             'calcio': requerimiento_calcio,
             'fosforo': requerimiento_fosforo,
-            
+            'magnesio': requerimiento_magnesio,
+
         }
         
     }
