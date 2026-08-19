@@ -1134,3 +1134,52 @@ INGESTA_ADECUADA_CALCIO = {
 }
 
 IMT_NINOS_Y_ADULTOS_CALCIO = 2500
+
+"""
+####
+Fosforo
+####
+"""
+
+REQUERIMIENTO_FOSFORO = {
+    0.5: {
+        'ia': 100,
+        'rpe': None,
+        'rdd': None,
+    },
+    1: {
+        'ia': 275,
+        'rpe': None,
+        'rdd': None,
+    },
+    3: {
+        'ia': None,
+        'rpe': 350,
+        'rdd': 450,
+    },
+    6: {
+        'ia': None,
+        'rpe': 400,
+        'rdd': 500,
+    },
+    9: {
+        'ia': None,
+        'rpe': 600,
+        'rdd': 700,
+    },
+    14: {
+        'ia': None, 
+        'rpe': 1000,
+        'rdd': 1200
+    },
+    float('inf'): {
+        'ia': None, 
+        'rpe': 580,
+        'rdd': 700
+    },
+}
+
+
+"""
+Magnesio pg 155 pdf
+"""

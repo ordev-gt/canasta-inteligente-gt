@@ -31,7 +31,8 @@ from .requerimientos import (
     CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES,
     IMT_VITAMINA_E,
-    INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO
+    INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO,
+    REQUERIMIENTO_FOSFORO
     
     )
 from typing import Dict, AnyStr
@@ -1022,7 +1023,19 @@ class Calcio:
             if p.edad < max_age:
                 return {'ia': requerimiento, 'imt':IMT_NINOS_Y_ADULTOS_CALCIO, 'rpe: None, ''rdd': None,'unidad': unidad }
         raise ValueError(f'No se encontro requerimiento de calcio para edad {p.edad}')
-    
+
+class Fosforo:
+    CV = 0.1 # quizas sirve en el futuro
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mg'
+        for max_age, requerimiento in REQUERIMIENTO_FOSFORO.items():
+            if p.edad < max_age:
+                _requerimiento = requerimiento.copy()
+                _requerimiento = _requerimiento | {'unidad': unidad}
+                return _requerimiento
+        raise ValueError(f'No se encontro requerimiento de fosforo para edad {p.edad}')
+
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
@@ -1114,13 +1127,16 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Calcio
     """
     requerimiento_calcio = Calcio.obtener_requerimiento(p)
+    """
+    Fosforo
+    """
+    requerimiento_fosforo = Fosforo.obtener_requerimiento(p)
 
     """
     Estandarizacion de Vitaminas pendientes:
 
     Minerales pendientes:
 
-    - Fosforo
     - Magensio
     - Hierro 
     - Zinc
@@ -1162,7 +1178,9 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "vitamina_k": requerimiento_vitamina_k,
         },
         "minerales": {
-            'calcio': requerimiento_calcio
+            'calcio': requerimiento_calcio,
+            'fosforo': requerimiento_fosforo,
+            
         }
         
     }
