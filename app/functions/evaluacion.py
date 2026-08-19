@@ -30,7 +30,8 @@ from .requerimientos import (
     REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES,
     CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES,
-    IMT_VITAMINA_E
+    IMT_VITAMINA_E,
+    INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO
     
     )
 from typing import Dict, AnyStr
@@ -999,6 +1000,7 @@ class VitaminaE:
         for edad_max, imt in IMT_VITAMINA_E.items():
             if p.edad < edad_max:
                 return {"imt": imt, 'unidad': unidad}
+
 class VitaminaK:
 
     @staticmethod
@@ -1012,6 +1014,15 @@ class VitaminaK:
 
         return {'ia':REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG*p.peso_para_calculos, 'rpe': None, 'rdd': None, 'unidad': unidad}
 
+class Calcio:
+    @staticmethod
+    def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mg'
+        for max_age, requerimiento in INGESTA_ADECUADA_CALCIO.items(): 
+            if p.edad < max_age:
+                return {'ia': requerimiento, 'imt':IMT_NINOS_Y_ADULTOS_CALCIO, 'rpe: None, ''rdd': None,'unidad': unidad }
+        raise ValueError(f'No se encontro requerimiento de calcio para edad {p.edad}')
+    
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
@@ -1032,20 +1043,11 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     requerimiento_proteina = Proteina.obtener_requerimiento(p)
 
     """
-    Carbohidratos, azucar y fibra
+    Carbohidratos, azucar y fibra dietetica
     """
     requerimiento_carbohidratos = Carbohidratos.obtener_requerimiento_gramos(p, ree)
     maximo_azucar = Carbohidratos.obtener_requerimiento_azucar_gramos(ree)
     recomendacion_fibra = Carbohidratos.obtener_requerimiento_fibra(p, ree)
-
-    """
-    Fibra Dietetica
-    """
-    
-    fiber_requirement = None
-
-    if p.edad >= 1:
-        fiber_requirement = (ree / 1000 * GRAMOS_DE_FIBRA_POR_1000_KCAL)
 
     """
     Lípidos
@@ -1056,10 +1058,8 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     """
     Vitamina A
     """
-
     requerimiento_vitamina_a = VitaminaA.obtener_requerimiento(p)
     imt_retinol = VitaminaA.obtener_retinol_imt(p.edad)
-
 
     """
     Tiamina
@@ -1110,15 +1110,16 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Vitamina K
     """
     requerimiento_vitamina_k = VitaminaK.obtener_requerimiento(p)
-
+    """
+    Calcio
+    """
+    requerimiento_calcio = Calcio.obtener_requerimiento(p)
 
     """
     Estandarizacion de Vitaminas pendientes:
-    - Vitamina E
-    - Vitamina K
+
     Minerales pendientes:
 
-    - Calcio
     - Fosforo
     - Magensio
     - Hierro 
@@ -1159,6 +1160,9 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             "vitamina_e": requerimiento_vitamina_e,
 
             "vitamina_k": requerimiento_vitamina_k,
+        },
+        "minerales": {
+            'calcio': requerimiento_calcio
         }
         
     }

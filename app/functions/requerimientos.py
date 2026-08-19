@@ -1103,3 +1103,34 @@ REQUERIMIENTOS_VITAMINA_K_INFANTES = {
 }
 
 REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG = 1 
+
+"""
+####
+####
+####
+
+Minerales 
+pag 185 - 186
+
+####
+####
+####
+"""
+
+"""
+####
+Calcio
+####
+"""
+INGESTA_ADECUADA_CALCIO = {
+    0.5: 300,
+    1: 400, 
+    3: 500, 
+    6: 600, 
+    9: 700, 
+    18: 1200, 
+    50: 1000,
+    float('inf'): 1200
+}
+
+IMT_NINOS_Y_ADULTOS_CALCIO = 2500
