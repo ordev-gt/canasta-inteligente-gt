@@ -18,7 +18,7 @@ from .requerimientos import (
     IA_ACIDO_PANTOTENICO, ACIDO_PANTOTENICO_ADICIONAL_EMBARAZO, ACIDO_PANTOTENICO_ADICIONAL_LACTANCIA,
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_ADICIONAL_EMBARAZO, VITAMINA_C_ADICIONAL_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
-    REQUERIMIENTOS_VITAMINA_D, IMT_LACTANTE_SUPLEMENTO_VITAMINAD, IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD,
+    REQUERIMIENTOS_VITAMINA_D, IMT_LACTANTES_SUPLEMENTO_VITAMINAD, IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD,
     REQUERIMIENTOS_VITAMINA_E, 
     REQUERIMIENTOS_VITAMINA_K_INFANTES, REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG,
     REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
@@ -29,7 +29,8 @@ from .requerimientos import (
     REQUERIMIENTOS_VITAMINAB12, REQUERIMIENTO_ADICIONAL_VITAMINAB12_EMBARAZO, REQUERIMIENTO_ADICIONAL_VITAMINAB12_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_VITAMINA_A_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_VITAMINA_A_LACTANTES,
     CARBOHIDRATOS_ADICIONALES_EMBARAZADA_ULTIMO_TRIMESTRE, CARBOHIDRATOS_ADICIONALES_LACTANCIA,
-    REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES
+    REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES,
+    IMT_VITAMINA_E
     
     )
 from typing import Dict, AnyStr
@@ -919,11 +920,9 @@ class VitaminaD:
     @staticmethod
     def obtener_imt(p: Persona):
         unidad = 'mcg'
-        if p.edad < 1:
-            return {'imt': None, 'unidad':unidad }
 
-        if p.esta_en_lactancia:
-            return {'imt': IMT_LACTANTE_SUPLEMENTO_VITAMINAD, 'unidad':unidad }
+        if p.edad < 1:
+            return {'imt': IMT_LACTANTES_SUPLEMENTO_VITAMINAD, 'unidad':unidad }
 
 
         return {'imt': IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD, 'unidad':unidad } # niños y adultos
@@ -967,31 +966,39 @@ class VitaminaE:
 
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
-        unidad = 'mg alfa-'
+        unidad = 'mg alfa-tocoferol'
         requerimientos_vitamina_c = VitaminaE.preprocesamiento_requerimientos_rpe_apartir_de_rdd()
         requerimiento_adicional = REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES if p.esta_en_lactancia else 0
 
         requerimientos = requerimientos_vitamina_c["todos"] if p.edad < 10 else requerimientos_vitamina_c[p.sexo]
-
+        _imt = VitaminaE.obtener_imt(p)
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
                     _requerimiento = requerimiento.copy()
+                    _requerimiento['imt'] = _imt['imt']
                     _requerimiento['unidad'] = unidad
-                    return _requerimiento
+
+                    return _requerimiento 
                 else:
                     if requerimiento['rpe'] is None:
                         raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
                     _requerimiento = requerimiento.copy()
                     _rpe =  _requerimiento['rpe'] + requerimiento_adicional
-                    _rdd = VitaminaC.calcular_rdd(_rpe)
+                    _rdd = VitaminaE.calcular_rdd(_rpe)
                     _requerimiento['rpe'] = _rpe
                     _requerimiento['rdd'] = _rdd
+                    _requerimiento['imt'] = _imt['imt']
                     _requerimiento['unidad'] = unidad
                     return _requerimiento
 
         raise ValueError(f"No se encontró requerimiento de vitamina C para edad {p.edad} y sexo {p.sexo}")
-
+    @staticmethod
+    def obtener_imt(p:Persona):
+        unidad = 'mg alfa-tocoferol'
+        for edad_max, imt in IMT_VITAMINA_E.items():
+            if p.edad < edad_max:
+                return {"imt": imt, 'unidad': unidad}
 class VitaminaK:
 
     @staticmethod
