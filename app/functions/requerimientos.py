@@ -1092,36 +1092,14 @@ IMT_VITAMINA_E = {
 """
 ####
 Vitamina K
+
+Todas son Ingesta Adecuada
 ####
 """
 
-REQUERIMIENTOS_VITAMINA_K = {
-    "todos": {
-        0.5: 5,
-        1: 10,
-        4: 15,
-        7: 20,
-        10: 25,
-    },
-
-    "hombre": {
-        12: 35,
-        14: 45,
-        16: 55,
-        18: 60,
-        65: 65,
-        float("inf"): 65,
-    },
-
-    "mujer": {
-        12: 35,
-        14: 45,
-        16: 50,
-        18: 55,
-        65: 55,
-        float("inf"): 55,
-    },
+REQUERIMIENTOS_VITAMINA_K_INFANTES = {
+    0.5: 5,
+    1: 10
 }
 
-VITAMINA_K_EMBARAZO = 55
-VITAMINA_K_LACTANCIA = 55
+REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG = 1 

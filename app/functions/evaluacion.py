@@ -19,8 +19,8 @@ from .requerimientos import (
     GRAMOS_DE_FIBRA_POR_1000_KCAL, IMC_EDAD_MESES_NINAS, IMC_EDAD_MESES_NINOS,
     VITAMINA_C_ADICIONAL_EMBARAZO, VITAMINA_C_ADICIONAL_LACTANCIA,  REQUERIMIENTOS_VITAMINA_C,
     REQUERIMIENTOS_VITAMINA_D, IMT_LACTANTE_SUPLEMENTO_VITAMINAD, IMT_NINOS_ADULTOS_SUPLEMENTO_VITAMINAD,
-    REQUERIMIENTOS_VITAMINA_E, VITAMINA_E_EMBARAZO, VITAMINA_E_LACTANCIA, 
-    REQUERIMIENTOS_VITAMINA_K, VITAMINA_K_EMBARAZO, VITAMINA_K_LACTANCIA,
+    REQUERIMIENTOS_VITAMINA_E, 
+    REQUERIMIENTOS_VITAMINA_K_INFANTES, REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG,
     REQUERIMIENTOS_TIAMINA, REQUERIMIENTO_ADICIONAL_TIAMINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_TIAMINA_LACTANCIA,
     REQUERIMIENTO_ADICIONAL_RIBOFLAVINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_RIBOFLAVINA_LACTANCIA, REQUERIMIENTOS_RIBOFLAVINA,
     REQUERIMIENTO_ADICIONAL_NIACINA_EMBARAZADAS, REQUERIMIENTOS_ADICIONAL_NIACINA_LACTANCIA, REQUERIMIENTOS_NIACINA,
@@ -585,7 +585,8 @@ class Carbohidratos:
             return {
                 'ia': None, 
                 'rpe': None, 
-                'rdd': None
+                'rdd': None,
+                 'unidad': 'g'
             }
 
 class VitaminaA:
@@ -767,7 +768,6 @@ class Folatos:
             if p.edad < edad_maxima:
                 if requerimiento_adicional == 0:
                     requerimiento_individual = requerimiento.copy()
-                    requerimiento_individual['folato_sintetico'] = {'imt':imt, 'unidad': 'mcg'}
                     requerimiento_individual['unidad'] = 'mcg EFD'
                     return requerimiento_individual
                 else:
@@ -891,7 +891,7 @@ class VitaminaC:
                 if requerimiento_adicional == 0:
                     _requerimiento = requerimiento.copy()
                     _requerimiento['unidad'] = unidad
-                    return requerimiento
+                    return _requerimiento
                 else:
                     if requerimiento['rpe'] is None:
                         raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
@@ -967,7 +967,7 @@ class VitaminaE:
 
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
-        unidad = 'mg'
+        unidad = 'mg alfa-'
         requerimientos_vitamina_c = VitaminaE.preprocesamiento_requerimientos_rpe_apartir_de_rdd()
         requerimiento_adicional = REQUERIMIENTO_ADICIONAL_VITAMINA_E_LACTANTES if p.esta_en_lactancia else 0
 
@@ -978,7 +978,7 @@ class VitaminaE:
                 if requerimiento_adicional == 0:
                     _requerimiento = requerimiento.copy()
                     _requerimiento['unidad'] = unidad
-                    return requerimiento
+                    return _requerimiento
                 else:
                     if requerimiento['rpe'] is None:
                         raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
@@ -996,26 +996,14 @@ class VitaminaK:
 
     @staticmethod
     def obtener_requerimiento(p: Persona) -> float:
+        unidad = 'mcg'
 
-        if p.esta_en_lactancia:
-            return VITAMINA_K_LACTANCIA
+        if p.edad < 0.5:
+            return {'ia':REQUERIMIENTOS_VITAMINA_K_INFANTES[0.5], 'rpe': None, 'rdd': None, 'unidad': unidad}
+        if p.edad < 1:
+            return {'ia':REQUERIMIENTOS_VITAMINA_K_INFANTES[1], 'rpe': None, 'rdd': None, 'unidad': unidad}
 
-        if p.esta_embarazada:
-            return VITAMINA_K_EMBARAZO
-
-        if p.edad < 10:
-            requerimientos = REQUERIMIENTOS_VITAMINA_K["todos"]
-        else:
-            requerimientos = REQUERIMIENTOS_VITAMINA_K[p.sexo]
-
-        for edad_maxima, requerimiento in requerimientos.items():
-            if p.edad < edad_maxima:
-                return requerimiento
-
-        raise ValueError(
-            f"No se encontró requerimiento de vitamina K "
-            f"para edad {p.edad} y sexo {p.sexo}"
-        )
+        return {'ia':REQUERIMIENTOS_VITAMINA_K_MCG_POR_KG*p.peso_para_calculos, 'rpe': None, 'rdd': None, 'unidad': unidad}
 
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
@@ -1163,12 +1151,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
             "vitamina_e": requerimiento_vitamina_e,
 
-            "vitamina_k": {
-                "ia": requerimiento_vitamina_k,
-                "minimo_efectivo": requerimiento_vitamina_k,
-                "idr": "ingesta_adecuada",
-                "unidad": "ug",
-            },
+            "vitamina_k": requerimiento_vitamina_k,
         }
         
     }
