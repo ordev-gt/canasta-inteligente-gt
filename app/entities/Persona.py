@@ -16,11 +16,12 @@ class Persona:
     mes_de_lactancia: int
 
     peso_para_calculos:float
+    padece_sudoracion_profusa: bool
 
     def __init__(self, nombre, edad, sexo, peso, naf=None, altura=None, 
                  esta_embarazada=False, mes_de_embarazo=None, reservas_de_energia_maternales=False,
                   esta_en_lactancia=False, peso_preembarazo: float = None, mes_de_lactancia: int = None,
-                  exposicion_solar_suficiente = True):
+                  exposicion_solar_suficiente = True, padece_sudoracion_profusa:bool = False):
 
         if not sexo in ['hombre', 'mujer']: 
             raise ValueError('Gender must be either hombre or mujer ')
@@ -56,6 +57,7 @@ class Persona:
         self.peso_preembarazo = peso_preembarazo
         self.exposicion_solar_suficiente = exposicion_solar_suficiente
         self.peso_para_calculos = None
+        self.padece_sudoracion_profusa = padece_sudoracion_profusa
         self.calculate_naf_index()
 
     

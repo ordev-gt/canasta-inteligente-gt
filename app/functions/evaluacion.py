@@ -37,7 +37,9 @@ from .requerimientos import (
     REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA,
     REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA, IMT_ZINC, IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA,
     REQUERIMIENTOS_COBRE, RPE_COBRE_MUJER_LACTANTE, RPE_COBRE_EMBARAZADA, RDD_COBRE_EMBARAZADA, RDD_COBRE_MUJER_LACTANTE, IMT_COBRE,
-    REQUERIMIENTOS_SELENIO, IMT_SELENIO, REQUERIMIENTO_ADICIONAL_SELENIO_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_SELENIO_LACTANTES
+    REQUERIMIENTOS_SELENIO, IMT_SELENIO, REQUERIMIENTO_ADICIONAL_SELENIO_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_SELENIO_LACTANTES, 
+    LIMITE_SODIO_ADULTO, LIMITE_SODIO_SUDORACION_PROFUSA, REQUERIMIENTOS_SODIO,
+    REQUERIMIENTOS_POTASIO
     
     )
 from typing import Dict, AnyStr
@@ -112,7 +114,7 @@ class Requerimiento(ABC):
         return rpe + 2 * (cv * rpe)
 
     @abstractmethod
-    def obtener_requerimiento(self, p: Persona) -> dict:
+    def obtener_requerimiento(self, p: Persona, **contexto) -> dict:
         pass
 
 
@@ -665,9 +667,9 @@ class VitaminaA:
                     else:
                         if requerimiento['rpe'] is None:
                             raise KeyError('Requerimiento no tiene RPE requerido para calculo.')
-
-                        new_requirment['rpe'] = requerimiento.get('rpe')
-                        new_requirment['rdd'] = VitaminaA.calcular_rdd(requerimiento['rpe']+requerimiento_adicional)
+                        new_rpe = requerimiento['rpe']+requerimiento_adicional
+                        new_requirment['rpe'] = new_rpe
+                        new_requirment['rdd'] = VitaminaA.calcular_rdd(new_rpe)
                         return new_requirment
                 
         raise ValueError(f"No se encontró requerimiento de vitamina A para edad {p.edad} y sexo {p.sexo}")   
@@ -1101,7 +1103,7 @@ class Hierro:
         requerimiento_adicional = 0
         if p.esta_embarazada:
             if p.mes_de_embarazo > 3:
-                requerimiento_adicional += REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE if p.mes_de_embarazo < 6 else REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE
+                requerimiento_adicional += REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE if p.mes_de_embarazo <= 6 else REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE
 
         if p.esta_en_lactancia:
             requerimiento_adicional += REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA
@@ -1172,10 +1174,11 @@ class Cobre(Requerimiento):
         unidad = 'mcg'
         imt = self.obtener_imt(p)
         if p.esta_embarazada and p.esta_en_lactancia:
-            rpe_adicional_embarazada = RPE_COBRE_EMBARAZADA - REQUERIMIENTOS_COBRE['mujer'][float('inf')]
-            rpe_adicional_mujer_lactante = RPE_COBRE_MUJER_LACTANTE - REQUERIMIENTOS_COBRE['mujer'][float('inf')]
+            rpe_base = REQUERIMIENTOS_COBRE['mujer'][float('inf')]['rpe']
+            rpe_adicional_embarazada = RPE_COBRE_EMBARAZADA - rpe_base
+            rpe_adicional_mujer_lactante = RPE_COBRE_MUJER_LACTANTE - rpe_base
             rpe_adicional_total = rpe_adicional_embarazada + rpe_adicional_mujer_lactante
-            rpe = REQUERIMIENTOS_COBRE['mujer'][float('inf')] + rpe_adicional_total
+            rpe = rpe_base + rpe_adicional_total
             rdd = self.calcular_rdd(rpe, Cobre.CV)
             return {'ia': None, 'rpe': rpe, 'rdd': rdd, 'unidad':unidad} | imt
         if p.esta_embarazada: 
@@ -1239,6 +1242,45 @@ class Selenio(Requerimiento):
             if p.edad < max_edad:
                 return {'imt':imt, 'unidad':unidad}
         raise ValueError(f'No se encontro imt de Cobre para edad {p.edad}')
+
+
+class Sodio(Requerimiento):
+
+    def obtener_requerimiento(self, p:Persona, ree: float):
+        imt = self.obtenet_limite(p, ree)
+        unidad = 'mg'
+        for max_age, requerimiento in REQUERIMIENTOS_SODIO.items():
+            if p.edad < max_age:
+                _requerimiento = requerimiento.copy()
+                _requerimiento = _requerimiento | {'unidad': unidad}
+                return _requerimiento | imt
+        raise ValueError(f'No se encontro requerimiento de sodio para edad {p.edad}')
+
+    def obtenet_limite(self, p: Persona, ree: float):
+        unidad = 'mg'
+        if p.edad > 15: 
+            limite = LIMITE_SODIO_SUDORACION_PROFUSA if p.padece_sudoracion_profusa else LIMITE_SODIO_ADULTO
+            return {'limite_sugerido': limite, 'unidad':unidad}
+        if p.edad < 2:
+            return {'limite_sugerido': None, 'unidad':unidad}
+
+
+        energia_adulto_referencia = 2000  
+        limite = LIMITE_SODIO_ADULTO * (ree / energia_adulto_referencia) # oms https://www.who.int/es/news-room/fact-sheets/detail/sodium-reduction?utm_source=chatgpt.com
+        limite = min(limite, LIMITE_SODIO_ADULTO)
+        return {'limite_sugerido': limite, 'unidad': unidad}
+
+class Potasio(Requerimiento):
+    def obtener_requerimiento(self, p):
+        unidad = 'mg'
+        for max_age, requerimiento in REQUERIMIENTOS_POTASIO.items():
+            if p.edad < max_age:
+                _requerimiento = requerimiento.copy()
+                _requerimiento = _requerimiento | {'unidad': unidad}
+                return _requerimiento 
+        raise ValueError(f'No se encontro requerimiento de potasio para edad {p.edad}')
+
+
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     evaluacion_peso_resultado = Peso.evaluacion_peso(p)
@@ -1249,7 +1291,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Energia
     """
     recomendacion_energia = Energia.obtener_requerimiento(p)
-    ree =  recomendacion_energia['ree']
+    ree:float =  recomendacion_energia['ree']
 
 
     """
@@ -1353,13 +1395,18 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Selenio
     """
     requerimiento_selenio = Selenio().obtener_requerimiento(p)
+    """
+    Sodio
+    """
+    requerimiento_sodio = Sodio().obtener_requerimiento(p, ree=ree)
+    """
+    Potasio
+    """
+    requerimiento_potasio = Potasio().obtener_requerimiento(p)
 
 
     """
     Estandarizacion de Vitaminas pendientes:
-
-    Minerales pendientes:
-    - Selenio
 
     Electrolitos
     - Sodio
@@ -1403,8 +1450,11 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             'zinc': requerimiento_zinc,
             'cobre': requerimiento_cobre,
             'selenio': requerimiento_selenio,
-            
 
+        },
+        'electrolitos': {
+            'sodio': requerimiento_sodio,
+            'potasio': requerimiento_potasio
         }
         
     }

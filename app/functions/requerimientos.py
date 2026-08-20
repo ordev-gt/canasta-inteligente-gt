@@ -399,21 +399,20 @@ REQUERIMIENTOS_VITAMINA_A = {
 
     "mujer": {
         12: {
-            "rpe": 350,
             "ia": None,
+            "rpe": 350,
+            'rdd': 500
         },
         14: {
+            "ia": None,
             "rpe": 400,
-            "ia": None,
-        },
-        18: {
-            "rpe": 450,
-            "ia": None,
+            'rdd': 600
         },
         float("inf"): {
-            "rpe": 450,
             "ia": None,
-        },
+            "rpe": 450,
+            'rdd': 650
+        }
     },
 }
 
@@ -1187,12 +1186,12 @@ Magnesio pg 155 pdf
 
 REQUERIMIENTO_MAGNESIO_INFANTES = {
     0.5: {
-        'ia': 100,
+        'ia': 30,
         'rpe': None,
         'rdd': None,
     },
     1: {
-        'ia': 275,
+        'ia': 60,
         'rpe': None,
         'rdd': None,
     },
@@ -1887,4 +1886,122 @@ REQUERIMIENTOS_SELENIO = {
             'rdd': 48,
         },
     },
+}
+
+REQUERIMIENTOS_SODIO = {
+    0.5: {
+        'ia': 120,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    1: {
+        'ia': 370,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    4: {
+        'ia': 1000,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    9: {
+        'ia': 1200,
+        'rpe': None,
+        'rdd': None,
+    },
+    14: {
+        'ia': 1500,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    18: {
+        'ia': 1500,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    51: {
+        'ia': 1500,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    71: {
+        'ia': 1300,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    float('inf'): {
+        'ia': 1200,
+        'rpe': None,
+        'rdd': None,
+    },
+}
+
+
+LIMITE_SODIO_ADULTO = 2000          # mg/día
+LIMITE_SODIO_SUDORACION_PROFUSA = 3930  # mg/díaz
+
+
+REQUERIMIENTOS_POTASIO = {
+    0.5: {
+        'ia': 400,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    1: {
+        'ia': 700,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    4: {
+        'ia': 3000,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    9: {
+        'ia': 3800,
+        'rpe': None,
+        'rdd': None,
+    },
+
+
+    14: {
+        'ia': 4500,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    18: {
+        'ia': 4700,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    51: {
+        'ia': 4700,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    71: {
+        'ia': 4700,
+        'rpe': None,
+        'rdd': None,
+    },
+
+    float('inf'): {
+        'ia': 4700,
+        'rpe': None,
+        'rdd': None,
+    },
+
 }
