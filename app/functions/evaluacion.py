@@ -35,7 +35,7 @@ from .requerimientos import (
     REQUERIMIENTO_FOSFORO,
     REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO,
     REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA,
-    REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA
+    REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA, IMT_ZINC, IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA
     
     )
 from typing import Dict, AnyStr
@@ -1134,11 +1134,12 @@ class Zinc(Requerimiento):
             requerimiento_adicional += REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA
 
         requerimientos = REQUERIMIENTOS_ZINC["todos"] if p.edad < 9 else REQUERIMIENTOS_ZINC[p.sexo]
+        imt = self.obtener_imt(p)
 
         for max_age, requerimiento in requerimientos.items():
             if p.edad < max_age:
                 if requerimiento_adicional == 0:
-                    return requerimiento | {'unidad': unidad}
+                    return requerimiento | {'unidad': unidad} | imt
                 else: 
                     _requerimiento = {}
                     for biodisponibilidad, i_requerimiento in requerimiento.items():
@@ -1147,8 +1148,21 @@ class Zinc(Requerimiento):
                         i_requerimiento_modif_req_adicional['rpe'] = rpe
                         i_requerimiento_modif_req_adicional['rdd'] = self.calcular_rdd(rpe, Zinc.CV)
                         _requerimiento[biodisponibilidad] = i_requerimiento_modif_req_adicional.copy()
-                    return _requerimiento | {'unidad': unidad}
-        raise ValueError(f'No se encontro requerimiento de Hierro para edad {p.edad}')
+                    return _requerimiento | {'unidad': unidad} | imt
+        raise ValueError(f'No se encontro requerimiento de Zinc para edad {p.edad}')
+
+
+    def obtener_imt(self, p: Persona):
+        unidad = 'mg'
+        if p.esta_embarazada or p.esta_en_lactancia:
+            imt = IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA
+            return {'imt': imt, 'unidad':unidad}
+        
+        imts =   IMT_ZINC["todos"] if p.edad < 9 else IMT_ZINC[p.sexo]
+        for max_age, imt in imts.items():
+            if p.edad < max_age:
+                return  {'imt': imt, 'unidad':unidad}
+        raise ValueError(f'No se encontro imt de Zinc para edad {p.edad}')
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
@@ -1262,7 +1276,6 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Estandarizacion de Vitaminas pendientes:
 
     Minerales pendientes:
-    - Zinc
     - Cobre
     - Selenio
 
