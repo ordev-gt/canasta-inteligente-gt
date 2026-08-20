@@ -36,7 +36,8 @@ from .requerimientos import (
     REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO,
     REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA,
     REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA, IMT_ZINC, IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA,
-    REQUERIMIENTOS_COBRE, RPE_COBRE_MUJER_LACTANTE, RPE_COBRE_EMBARAZADA, RDD_COBRE_EMBARAZADA, RDD_COBRE_MUJER_LACTANTE, IMT_COBRE
+    REQUERIMIENTOS_COBRE, RPE_COBRE_MUJER_LACTANTE, RPE_COBRE_EMBARAZADA, RDD_COBRE_EMBARAZADA, RDD_COBRE_MUJER_LACTANTE, IMT_COBRE,
+    REQUERIMIENTOS_SELENIO, IMT_SELENIO, REQUERIMIENTO_ADICIONAL_SELENIO_EMBARAZADAS, REQUERIMIENTO_ADICIONAL_SELENIO_LACTANTES
     
     )
 from typing import Dict, AnyStr
@@ -1198,6 +1199,46 @@ class Cobre(Requerimiento):
                 return {'imt':imt, 'unidad':unidad}
         raise ValueError(f'No se encontro imt de Cobre para edad {p.edad}')
 
+class Selenio(Requerimiento):
+    CV = 0.1
+    def obtener_requerimiento(self, p):
+        unidad = 'mcg'
+        imt = self.obtener_imt(p)
+        requerimiento_adicional = 0
+
+        if p.esta_en_lactancia:
+            requerimiento_adicional += REQUERIMIENTO_ADICIONAL_SELENIO_LACTANTES
+
+        if p.esta_embarazada:
+            requerimiento_adicional += REQUERIMIENTO_ADICIONAL_SELENIO_EMBARAZADAS
+
+        requerimientos = REQUERIMIENTOS_SELENIO["todos"] if p.edad < 10 else REQUERIMIENTOS_SELENIO[p.sexo]
+
+        for edad_maxima, requerimiento in requerimientos.items():
+            if p.edad < edad_maxima:
+                if requerimiento_adicional == 0:
+                    _requerimiento = requerimiento.copy()
+                    _requerimiento['unidad'] = unidad
+                    return _requerimiento | imt
+                else:
+                    if requerimiento['rpe'] is None:
+                        raise ValueError('rpe debe estar definido para personas con requerimientos adiiconales (embarzadas y lactantes)')
+                    _requerimiento = requerimiento.copy()
+                    _rpe =  _requerimiento['rpe'] + requerimiento_adicional
+                    _rdd = self.calcular_rdd(_rpe, Selenio.CV)
+                    _requerimiento['rpe'] = _rpe
+                    _requerimiento['rdd'] = _rdd
+                    _requerimiento['unidad'] = unidad
+                    return _requerimiento | imt
+
+        raise ValueError(f"No se encontró requerimiento de vitamina C para edad {p.edad} y sexo {p.sexo}")
+
+    def obtener_imt(self, p):
+        unidad = 'mcg'
+        for max_edad, imt in IMT_SELENIO.items():
+            if p.edad < max_edad:
+                return {'imt':imt, 'unidad':unidad}
+        raise ValueError(f'No se encontro imt de Cobre para edad {p.edad}')
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     evaluacion_peso_resultado = Peso.evaluacion_peso(p)
@@ -1308,13 +1349,16 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Cobre
     """
     requerimiento_cobre = Cobre().obtener_requerimiento(p)
+    """
+    Selenio
+    """
+    requerimiento_selenio = Selenio().obtener_requerimiento(p)
 
 
     """
     Estandarizacion de Vitaminas pendientes:
 
     Minerales pendientes:
-    - Cobre
     - Selenio
 
     Electrolitos
@@ -1358,6 +1402,8 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             'hierro': requerimiento_hierro,
             'zinc': requerimiento_zinc,
             'cobre': requerimiento_cobre,
+            'selenio': requerimiento_selenio,
+            
 
         }
         

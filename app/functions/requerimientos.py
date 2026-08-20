@@ -1790,3 +1790,101 @@ IMT_COBRE = {
     18: 8000, 
     float('inf'): 10000
 }
+
+
+REQUERIMIENTO_ADICIONAL_SELENIO_EMBARAZADAS = 4
+REQUERIMIENTO_ADICIONAL_SELENIO_LACTANTES = 14
+
+IMT_SELENIO = {
+    1: None, 
+    3: 90, 
+    8: 150,
+    13: 280, 
+    float('inf'): 400
+}
+
+
+REQUERIMIENTOS_SELENIO = {
+    'todos': {
+        0.5: {
+            'ia': 12,
+            'rpe': None,
+            'rdd': None,
+        },
+
+        1: {
+            'ia': 19,
+            'rpe': None,
+            'rdd': None,
+        },
+
+        3: {
+            'ia': None,
+            'rpe': 18,
+            'rdd': 22,
+        },
+
+        6: {
+            'ia': None,
+            'rpe': 20,
+            'rdd': 24,
+        },
+
+        9: {
+            'ia': None,
+            'rpe': 24,
+            'rdd': 30,
+        },
+    },
+
+    'hombre': {
+        12: {
+            'ia': None,
+            'rpe': 29,
+            'rdd': 35,
+        },
+        14: {
+            'ia': None,
+            'rpe': 33,
+            'rdd': 40,
+        },
+        16: {
+            'ia': None,
+            'rpe': 40,
+            'rdd': 48,
+        },
+        18: {
+            'ia': None,
+            'rpe': 44,
+            'rdd': 53,
+        },
+        float('inf'): {
+            'ia': None,
+            'rpe': 45,
+            'rdd': 54,
+        },
+    },
+
+    'mujer': {
+        12: {
+            'ia': None,
+            'rpe': 29,
+            'rdd': 35,
+        },
+        14: {
+            'ia': None,
+            'rpe': 33,
+            'rdd': 40,
+        },
+        16: {
+            'ia': None,
+            'rpe': 38,
+            'rdd': 46,
+        },
+        float('inf'): {
+            'ia': None,
+            'rpe': 40,
+            'rdd': 48,
+        },
+    },
+}
