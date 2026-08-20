@@ -34,10 +34,12 @@ from .requerimientos import (
     INGESTA_ADECUADA_CALCIO, IMT_NINOS_Y_ADULTOS_CALCIO,
     REQUERIMIENTO_FOSFORO,
     REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO,
-    REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA
+    REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA,
+    REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA
     
     )
 from typing import Dict, AnyStr
+from abc import ABC, abstractmethod
 
 """
 Evaluación del peso corporal
@@ -78,6 +80,40 @@ valoración realizada por un profesional de la salud.
 
 La función retorna tanto el peso corporal observado como el peso seleccionado para los cálculos posteriores, indicando explícitamente si se utilizó el peso real o un peso de referencia.
 """
+
+class Requerimiento(ABC):
+
+    @staticmethod
+    def calcular_rpe(rdd: float, cv:float):
+        """Calcula RPE a partir del RDD, en caso siga una distribucion normal el requerimiento. 
+    
+        Args:
+        rdd (float): Recomendacion dietetica diaria (RDD) 
+        cv (float): Coeficiente de variacion del requerimiento para la poblacion. 
+        
+        Returns:
+        float: Requerimiento Promedio Estimado (RPE)
+        """
+        return rdd / (2 * cv + 1)
+
+    @staticmethod
+    def calcular_rdd(rpe: float, cv: float):
+        """Calcula RDD a partir del RPE, en caso siga una distribucion normal el requerimiento. 
+    
+        Args:
+        rdd (float): Recomendacion dietetica diaria (RDD) 
+        cv (float): Coeficiente de variacion del requerimiento para la poblacion. 
+        
+        Returns:
+        float: Requerimiento Promedio Estimado (RPE)
+        """
+        return rpe + 2 * (cv * rpe)
+
+    @staticmethod
+    @abstractmethod
+    def obtener_requerimiento(p: Persona) -> dict:
+        pass
+
 
 class Peso:
 
@@ -1077,7 +1113,7 @@ class Hierro:
                     return requerimiento | {'unidad': unidad}
                 else: 
                     _requerimiento = {}
-                    for biodisponibilidad, i_requerimiento in requerimiento:
+                    for biodisponibilidad, i_requerimiento in requerimiento.items():
                         i_requerimiento_modif_req_adicional = i_requerimiento.copy()
                         i_requerimiento_modif_req_adicional['rpe'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rpe') 
                         i_requerimiento_modif_req_adicional['rdd'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rdd') 
@@ -1085,6 +1121,34 @@ class Hierro:
                     return _requerimiento | {'unidad': unidad}
         raise ValueError(f'No se encontro requerimiento de Hierro para edad {p.edad}')
 
+class Zinc(Requerimiento):
+    CV = 0.1
+
+    def obtener_requerimiento(self, p: Persona):
+        unidad = 'mg'
+        requerimiento_adicional = 0
+        if p.esta_embarazada:
+                requerimiento_adicional += REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS
+
+        if p.esta_en_lactancia:
+            requerimiento_adicional += REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA
+
+        requerimientos = REQUERIMIENTOS_ZINC["todos"] if p.edad < 9 else REQUERIMIENTOS_ZINC[p.sexo]
+
+        for max_age, requerimiento in requerimientos.items():
+            if p.edad < max_age:
+                if requerimiento_adicional == 0:
+                    return requerimiento | {'unidad': unidad}
+                else: 
+                    _requerimiento = {}
+                    for biodisponibilidad, i_requerimiento in requerimiento.items():
+                        i_requerimiento_modif_req_adicional = i_requerimiento.copy()
+                        rpe: float = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rpe') 
+                        i_requerimiento_modif_req_adicional['rpe'] = rpe
+                        i_requerimiento_modif_req_adicional['rdd'] = self.calcular_rdd(rpe, Zinc.CV)
+                        _requerimiento[biodisponibilidad] = i_requerimiento_modif_req_adicional.copy()
+                    return _requerimiento | {'unidad': unidad}
+        raise ValueError(f'No se encontro requerimiento de Hierro para edad {p.edad}')
 
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
@@ -1188,6 +1252,11 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Hierro
     """
     requerimiento_hierro = Hierro.obtener_requerimiento(p)
+    """
+    Zinc
+    """
+    requerimiento_zinc = Zinc().obtener_requerimiento(p)
+
 
     """
     Estandarizacion de Vitaminas pendientes:
@@ -1236,6 +1305,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             'fosforo': requerimiento_fosforo,
             'magnesio': requerimiento_magnesio,
             'hierro': requerimiento_hierro,
+            'zinc': requerimiento_zinc,
 
         }
         

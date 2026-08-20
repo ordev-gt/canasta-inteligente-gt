@@ -161,93 +161,90 @@ if __name__ == "__main__":
         print(nombre)
         print("=" * 80)
 
-        try:
-            # evaluacion_de_requerimientos_diarios ya establece
-            # persona.peso_para_calculos internamente.
-            requerimientos = evaluacion_de_requerimientos_diarios(persona)
+        # evaluacion_de_requerimientos_diarios ya establece
+        # persona.peso_para_calculos internamente.
+        requerimientos = evaluacion_de_requerimientos_diarios(persona)
 
-            # Se vuelve a obtener solamente para mostrar los detalles antropométricos.
-            evaluacion_peso_resultado = Peso.evaluacion_peso(persona)
+        # Se vuelve a obtener solamente para mostrar los detalles antropométricos.
+        evaluacion_peso_resultado = Peso.evaluacion_peso(persona)
 
-            print(f"Edad: {persona.edad} años ({persona.edad_meses} meses)")
-            print(f"Sexo: {persona.sexo}")
-            print(f"Peso real: {persona.peso:.2f} kg")
-            print(f"Altura: {persona.altura:.2f} m")
-            print(f"NAF: {persona.naf}")
-            print()
+        print(f"Edad: {persona.edad} años ({persona.edad_meses} meses)")
+        print(f"Sexo: {persona.sexo}")
+        print(f"Peso real: {persona.peso:.2f} kg")
+        print(f"Altura: {persona.altura:.2f} m")
+        print(f"NAF: {persona.naf}")
+        print()
 
-            # --------------------------------------------------
-            # PESO
-            # --------------------------------------------------
+        # --------------------------------------------------
+        # PESO
+        # --------------------------------------------------
 
-            print("EVALUACIÓN DEL PESO")
+        print("EVALUACIÓN DEL PESO")
+        print(
+            f"Indicador: "
+            f"{evaluacion_peso_resultado['indicador']}"
+        )
+        print(
+            f"Estado: "
+            f"{evaluacion_peso_resultado['estado_de_indicador']}"
+        )
+        print(
+            f"Peso para cálculos: "
+            f"{evaluacion_peso_resultado['peso_para_calculos']:.2f} kg"
+        )
+        print(
+            f"Fuente de peso: "
+            f"{evaluacion_peso_resultado['fuente_de_peso']}"
+        )
+        print(
+            f"Requiere intervención profesional: "
+            f"{evaluacion_peso_resultado['requiere_intervencion_profesional']}"
+        )
+
+        if evaluacion_peso_resultado["valor_de_indicador"] is not None:
             print(
-                f"Indicador: "
-                f"{evaluacion_peso_resultado['indicador']}"
+                f"Valor del indicador: "
+                f"{evaluacion_peso_resultado['valor_de_indicador']:.2f}"
             )
+
+        print()
+
+        # --------------------------------------------------
+        # ENERGÍA
+        # --------------------------------------------------
+        print(requerimientos)
+        """             energia = requerimientos["energia"]
+
+        print("ENERGÍA")
+        print(
+            f"REE: {energia['ree']:.2f} "
+            f"{energia['unidad']}/día"
+        )
+        print()
+
+        # --------------------------------------------------
+        # PROTEÍNA
+        # --------------------------------------------------
+
+        proteina = requerimientos["proteina"]
+
+        print("PROTEÍNA")
+        print(
+            f"RPE: {proteina['rpe']:.2f} "
+            f"{proteina['unidad']}/día"
+        )
+        print(
+            f"RDD proteína de referencia: "
+            f"{proteina['rdd_referencia']:.2f} "
+            f"{proteina['unidad']}/día"
+        )
+
+        if proteina["rdd_dieta_mixta"] is not None:
             print(
-                f"Estado: "
-                f"{evaluacion_peso_resultado['estado_de_indicador']}"
-            )
-            print(
-                f"Peso para cálculos: "
-                f"{evaluacion_peso_resultado['peso_para_calculos']:.2f} kg"
-            )
-            print(
-                f"Fuente de peso: "
-                f"{evaluacion_peso_resultado['fuente_de_peso']}"
-            )
-            print(
-                f"Requiere intervención profesional: "
-                f"{evaluacion_peso_resultado['requiere_intervencion_profesional']}"
-            )
-
-            if evaluacion_peso_resultado["valor_de_indicador"] is not None:
-                print(
-                    f"Valor del indicador: "
-                    f"{evaluacion_peso_resultado['valor_de_indicador']:.2f}"
-                )
-
-            print()
-
-            # --------------------------------------------------
-            # ENERGÍA
-            # --------------------------------------------------
-
-            energia = requerimientos["energia"]
-
-            print("ENERGÍA")
-            print(
-                f"REE: {energia['ree']:.2f} "
-                f"{energia['unidad']}/día"
-            )
-            print()
-
-            # --------------------------------------------------
-            # PROTEÍNA
-            # --------------------------------------------------
-
-            proteina = requerimientos["proteina"]
-
-            print("PROTEÍNA")
-            print(
-                f"RPE: {proteina['rpe']:.2f} "
+                f"RDD dieta mixta: "
+                f"{proteina['rdd_dieta_mixta']:.2f} "
                 f"{proteina['unidad']}/día"
             )
-            print(
-                f"RDD proteína de referencia: "
-                f"{proteina['rdd_referencia']:.2f} "
-                f"{proteina['unidad']}/día"
-            )
+        else:
+            print("RDD dieta mixta: No disponible") """
 
-            if proteina["rdd_dieta_mixta"] is not None:
-                print(
-                    f"RDD dieta mixta: "
-                    f"{proteina['rdd_dieta_mixta']:.2f} "
-                    f"{proteina['unidad']}/día"
-                )
-            else:
-                print("RDD dieta mixta: No disponible")
-
-        except Exception as e:
-            print(f"ERROR: {type(e).__name__}: {e}")

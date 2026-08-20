@@ -1452,3 +1452,227 @@ REQUERIMIENTOS_HIERRO = {
 REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE = 4.7
 REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE = 5.6
 REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA = 0.3
+
+"""
+Zinc pg 158 pdf
+
+"""
+REQUERIMIENTOS_ZINC = {
+    'todos': {
+        0.5: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': None,
+                'rdd': None,
+            },
+        },
+
+        1: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 2.6,
+                'rdd': 3.1,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.2,
+                'rdd': 6.3,
+            },
+        },
+
+        3: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 1.9,
+                'rdd': 2.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 3.8,
+                'rdd': 4.6,
+            },
+        },
+
+        6: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 2.4,
+                'rdd': 2.9,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 4.8,
+                'rdd': 5.8,
+            },
+        },
+
+        9: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 3.3,
+                'rdd': 4.0,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.6,
+                'rdd': 7.9,
+            },
+        },
+    },
+
+    'hombre': {
+        12: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 4.3,
+                'rdd': 5.2,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.7,
+                'rdd': 10.4,
+            },
+        },
+        14: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.9,
+                'rdd': 8.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 13.9,
+                'rdd': 16.6,
+            },
+        },
+        16: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.9,
+                'rdd': 8.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 13.8,
+                'rdd': 16.6,
+            },
+        },
+        18: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 7.9,
+                'rdd': 9.5,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 15.9,
+                'rdd': 19.1,
+            },
+        },
+
+        float('inf'): {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 8.8,
+                'rdd': 10.6,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 17.7,
+                'rdd': 21.2,
+            },
+        },
+    },
+
+    'mujer': {
+        12: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 4.5,
+                'rdd': 5.4,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 9.0,
+                'rdd': 10.8,
+            },
+        },
+        14: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.7,
+                'rdd': 6.8,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 11.4,
+                'rdd': 13.7,
+            },
+        },
+
+        16: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 5.8,
+                'rdd': 6.9,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 11.5,
+                'rdd': 13.8,
+            },
+        },
+        18: {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.1,
+                'rdd': 7.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 12.2,
+                'rdd': 14.7,
+            },
+        },
+        float('inf'): {
+            'alta_biodisponibilidad': {
+                'ia': None,
+                'rpe': 6.1,
+                'rdd': 7.3,
+            },
+            'baja_biodisponibilidad': {
+                'ia': None,
+                'rpe': 12.2,
+                'rdd': 14.6,
+            },
+        },
+    },
+}
+REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS = 0.7
+REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA = 1
+
+
+IMT_ZINC = {
+    'todos':{
+        0.5: None, 
+        1: 6,
+        3: 8, 
+        8: 14, 
+        13: 26, 
+    },
+    'hombre': {
+        18: 44, 
+        float('inf'): 40
+    },
+    'mujer': {
+        18: 39, 
+        float('inf'): 40
+    },
+}
+
+IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA = 40
