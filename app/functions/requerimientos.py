@@ -1677,4 +1677,116 @@ IMT_ZINC = {
 
 IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA = 40
 
+RPE_COBRE_EMBARAZADA = 800
+RDD_COBRE_EMBARAZADA = 1000
+RPE_COBRE_MUJER_LACTANTE = 1000
+RDD_COBRE_MUJER_LACTANTE = 1300
 
+REQUERIMIENTOS_COBRE = {
+    'todos': {
+        0.5: {
+            'ia': 200,
+            'rpe': None,
+            'rdd': None,
+        },
+
+        1: {
+            'ia': 220,
+            'rpe': None,
+            'rdd': None,
+        },
+
+        3: {
+            'ia': None,
+            'rpe': 260,
+            'rdd': 340,
+        },
+
+        6: {
+            'ia': None,
+            'rpe': 300,
+            'rdd': 400,
+        },
+
+        9: {
+            'ia': None,
+            'rpe': 380,
+            'rdd': 500,
+        },
+    },
+
+    'hombre': {
+        12: {
+            'ia': None,
+            'rpe': 470,
+            'rdd': 600,
+        },
+
+        14: {
+            'ia': None,
+            'rpe': 550,
+            'rdd': 700,
+        },
+
+        16: {
+            'ia': None,
+            'rpe': 650,
+            'rdd': 850,
+        },
+
+        18: {
+            'ia': None,
+            'rpe': 700,
+            'rdd': 900,
+        },
+
+        float('inf'): {
+            'ia': None,
+            'rpe': 700,
+            'rdd': 900,
+        },
+    },
+
+    'mujer': {
+        12: {
+            'ia': None,
+            'rpe': 470,
+            'rdd': 600,
+        },
+
+        14: {
+            'ia': None,
+            'rpe': 550,
+            'rdd': 700,
+        },
+
+        16: {
+            'ia': None,
+            'rpe': 650,
+            'rdd': 850,
+        },
+
+        18: {
+            'ia': None,
+            'rpe': 700,
+            'rdd': 900,
+        },
+
+        float('inf'): {
+            'ia': None,
+            'rpe': 700,
+            'rdd': 900,
+        },
+    },
+}
+
+# En microgramos
+IMT_COBRE = {
+    1: None, 
+    3: 1000, 
+    6: 3000, 
+    9: 4000,
+    13: 5000, 
+    18: 8000, 
+    float('inf'): 10000
+}

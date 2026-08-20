@@ -35,7 +35,8 @@ from .requerimientos import (
     REQUERIMIENTO_FOSFORO,
     REQUERIMIENTO_MAGNESIO_INFANTES, REQUERIMIENTO_MAGNESIO_POR_KG, RPE_ADICIONAL_EMBARAZADAS_MAGNESIO,
     REQUERIMIENTOS_HIERRO, REQUERIMIENTO_ADICIONAL_EMBARZADAS_SEGUNDO_TRIMESTRE, REQUERIMIENTO_ADICIONAL_EMBARZADAS_TERCER_TRIMESTRE, REQUERIMIENTO_ADICIONAL_MUJER_EN_LACTANCIA,
-    REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA, IMT_ZINC, IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA
+    REQUERIMIENTOS_ZINC, REQUERIMIENTO_ADICIONAL_ZINC_EMBARAZADAS,  REQUERIMIENTO_ADICIONAL_ZINC_MUJERES_EN_LACTANCIA, IMT_ZINC, IMT_ZINC_EMBARAZADA_Y_MUJERES_EN_LACTANCIA,
+    REQUERIMIENTOS_COBRE, RPE_COBRE_MUJER_LACTANTE, RPE_COBRE_EMBARAZADA, RDD_COBRE_EMBARAZADA, RDD_COBRE_MUJER_LACTANTE, IMT_COBRE
     
     )
 from typing import Dict, AnyStr
@@ -109,9 +110,8 @@ class Requerimiento(ABC):
         """
         return rpe + 2 * (cv * rpe)
 
-    @staticmethod
     @abstractmethod
-    def obtener_requerimiento(p: Persona) -> dict:
+    def obtener_requerimiento(self, p: Persona) -> dict:
         pass
 
 
@@ -1164,6 +1164,40 @@ class Zinc(Requerimiento):
                 return  {'imt': imt, 'unidad':unidad}
         raise ValueError(f'No se encontro imt de Zinc para edad {p.edad}')
 
+class Cobre(Requerimiento):
+    CV = 0.15
+
+    def obtener_requerimiento(self, p: Persona):
+        unidad = 'mcg'
+        imt = self.obtener_imt(p)
+        if p.esta_embarazada and p.esta_en_lactancia:
+            rpe_adicional_embarazada = RPE_COBRE_EMBARAZADA - REQUERIMIENTOS_COBRE['mujer'][float('inf')]
+            rpe_adicional_mujer_lactante = RPE_COBRE_MUJER_LACTANTE - REQUERIMIENTOS_COBRE['mujer'][float('inf')]
+            rpe_adicional_total = rpe_adicional_embarazada + rpe_adicional_mujer_lactante
+            rpe = REQUERIMIENTOS_COBRE['mujer'][float('inf')] + rpe_adicional_total
+            rdd = self.calcular_rdd(rpe, Cobre.CV)
+            return {'ia': None, 'rpe': rpe, 'rdd': rdd, 'unidad':unidad} | imt
+        if p.esta_embarazada: 
+            return {'ia': None, 'rpe': RPE_COBRE_EMBARAZADA, 'rdd': RDD_COBRE_EMBARAZADA, 'unidad':unidad} | imt
+        if p.esta_en_lactancia: 
+            return {'ia': None, 'rpe': RPE_COBRE_MUJER_LACTANTE, 'rdd': RDD_COBRE_MUJER_LACTANTE, 'unidad':unidad} | imt
+
+        requerimientos = REQUERIMIENTOS_COBRE["todos"] if p.edad < 9 else REQUERIMIENTOS_COBRE[p.sexo]
+        for max_age, requerimiento in requerimientos.items():
+            if p.edad < max_age:
+                _requerimiento = requerimiento.copy()
+                _requerimiento = _requerimiento | {'unidad': unidad}
+                return _requerimiento | imt
+
+        raise ValueError(f'No se encontro requerimiento de cobre para edad {p.edad}')
+
+    def obtener_imt(self, p: Persona):
+        unidad = 'mcg'
+        for max_edad, imt in IMT_COBRE.items():
+            if p.edad < max_edad:
+                return {'imt':imt, 'unidad':unidad}
+        raise ValueError(f'No se encontro imt de Cobre para edad {p.edad}')
+
 def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
 
     evaluacion_peso_resultado = Peso.evaluacion_peso(p)
@@ -1270,6 +1304,10 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     Zinc
     """
     requerimiento_zinc = Zinc().obtener_requerimiento(p)
+    """
+    Cobre
+    """
+    requerimiento_cobre = Cobre().obtener_requerimiento(p)
 
 
     """
@@ -1319,6 +1357,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
             'magnesio': requerimiento_magnesio,
             'hierro': requerimiento_hierro,
             'zinc': requerimiento_zinc,
+            'cobre': requerimiento_cobre,
 
         }
         
