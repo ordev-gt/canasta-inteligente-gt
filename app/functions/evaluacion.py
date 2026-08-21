@@ -1096,9 +1096,10 @@ class Magensio:
                 rdd = Magensio.calcular_rdd(rpe)
                 return {'ia': None, 'rpe': rpe, 'rdd': rdd, 'unidad': unidad}
 
-class Hierro:
-    @staticmethod
-    def obtener_requerimiento(p: Persona) -> float:
+class Hierro(Requerimiento):
+    CV = 0.15
+
+    def obtener_requerimiento(self, p: Persona) -> float:
         unidad = 'mg'
         requerimiento_adicional = 0
         if p.esta_embarazada:
@@ -1119,7 +1120,7 @@ class Hierro:
                     for biodisponibilidad, i_requerimiento in requerimiento.items():
                         i_requerimiento_modif_req_adicional = i_requerimiento.copy()
                         i_requerimiento_modif_req_adicional['rpe'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rpe') 
-                        i_requerimiento_modif_req_adicional['rdd'] = requerimiento_adicional + i_requerimiento_modif_req_adicional.get('rdd') 
+                        i_requerimiento_modif_req_adicional['rdd'] = self.calcular_rdd(i_requerimiento_modif_req_adicional.get('rpe'), Hierro.CV) 
                         _requerimiento[biodisponibilidad] = i_requerimiento_modif_req_adicional.copy()
                     return _requerimiento | {'unidad': unidad}
         raise ValueError(f'No se encontro requerimiento de Hierro para edad {p.edad}')
