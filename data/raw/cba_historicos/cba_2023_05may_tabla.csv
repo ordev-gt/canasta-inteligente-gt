@@ -1,0 +1,35 @@
+﻿no,categoria,producto,unidad_medida,gramos_hogar_dia,precio_promedio_simple_por_unidad_medida,costo_diario_hogar_4_77_personas
+1,Cereales,Arroz,460 gms,169,6.72,2.46
+2,Cereales,Avena de toda clase,460 gms,51,13.97,1.56
+3,Cereales,Pan francés,460 gms,184,9.74,3.89
+4,Cereales,Pan dulce,460 gms,226,9.09,4.47
+5,Cereales,Pastas de todos los tipos,230 gms,65,5.53,1.56
+6,Cereales,Tortillas de maíz,460 gms,1861,5.0,20.23
+7,Carnes,Carne de res sin hueso,460 gms,107,32.09,7.46
+8,Carnes,Carne de res con hueso,460 gms,105,19.57,4.48
+9,Carnes,Carne de cerdo sin hueso,460 gms,93,23.41,4.75
+10,Carnes,Carne de pollo o gallina,460 gms,159,14.53,5.01
+11,Carnes,Embutidos,460 gms,64,15.14,2.1
+12,Lácteos,Leche en polvo,460 gms,32,44.52,3.06
+13,Lácteos,Leche líquida,1000 ml,266,14.32,3.81
+14,Lácteos,Queso fresco o duro,460 gms,32,29.05,2.05
+15,Lácteos,Crema fresca,250 ml,47,11.39,2.15
+16,Huevos,Huevos de gallina,648 gms,138,17.15,3.64
+17,Grasas y aceites,Aceites comestibles,750 ml,129,19.64,3.37
+18,Frutas,Aguacates,460 gms,106,10.46,2.42
+19,Frutas,Bananos/guineos,460 gms,268,2.75,1.6
+20,Frutas,Plátanos,460 gms,214,4.25,1.98
+21,Frutas,Piñas,460 gms,191,2.94,1.22
+22,Frutas,Sandias,460 gms,222,2.27,1.09
+23,Verduras/hortalizas,Tomate,460 gms,170,5.82,2.15
+24,Verduras/hortalizas,Güisquil,460 gms,429,2.99,2.79
+25,Verduras/hortalizas,Cebolla blanca sin tallo,460 gms,98,4.29,0.92
+26,Verduras/hortalizas,Papas,460 gms,151,5.62,1.84
+27,Verduras/hortalizas,Hierbas,460 gms,115,5.47,1.37
+28,Leguminosas,Frijol,460 gms,286,9.16,5.69
+29,Azúcar,Azúcar,460 gms,429,3.84,3.58
+30,Miscelánea,Preparación nutricional a base de maíz y soya,460 gms,57,11.22,1.39
+31,Miscelánea,Sal,115 gms,45,0.36,0.14
+32,Miscelánea,Sopas instantáneas en vaso,230 gms,15,16.5,1.05
+33,Miscelánea,"Café en grano, molido, instantáneo",460 gms,43,45.84,4.29
+34,Miscelánea,Aguas gaseosas,1000 ml,260,11.07,2.88
