@@ -1383,7 +1383,7 @@ def evaluacion_de_requerimientos_diarios(p: Persona) -> dict:
     """
     Hierro
     """
-    requerimiento_hierro = Hierro.obtener_requerimiento(p)
+    requerimiento_hierro = Hierro().obtener_requerimiento(p)
     """
     Zinc
     """
