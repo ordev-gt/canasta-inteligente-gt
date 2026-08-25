@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: canasta-inteligente-gt
+Version: 0.1.0
+Summary: Evaluación nutricional y modelado de la canasta alimentaria de Guatemala
+Requires-Python: >=3.10
+Requires-Dist: pandas
+Requires-Dist: pyarrow>=13.0.0
+Requires-Dist: pdfplumber
+Requires-Dist: rapidfuzz
+Requires-Dist: openpyxl

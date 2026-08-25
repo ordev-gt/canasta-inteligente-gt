@@ -1,6 +1,6 @@
 venv
 /data/raw/references
-data_loaders/cache/
+data/cache/
 *.bak
 items.txt
 __pycache__

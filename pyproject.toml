@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canasta-inteligente-gt"
+version = "0.1.0"
+description = "Evaluación nutricional y modelado de la canasta alimentaria de Guatemala"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "pyarrow>=13.0.0",
+    "pdfplumber",
+    "rapidfuzz",
+    "openpyxl",
+    "matplotlib",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,9 +1,5 @@
 pandas
-setuptools>=68
 pyarrow>=13.0.0
 pdfplumber
 rapidfuzz
 openpyxl
-matplotlib
-ipykernel
--e .

@@ -5,8 +5,11 @@
             "name": "Debug main nutrition evaluation",
             "type": "debugpy",
             "request": "launch",
-            "module": "app.functions.main",
+            "module": "canasta_inteligente.app.main",
             "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
             "console": "integratedTerminal"
         }
     ]

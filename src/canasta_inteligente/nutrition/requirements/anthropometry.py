@@ -1,0 +1,8 @@
+from ._catalog import (
+    IMC_ADULTO_MAX, IMC_ADULTO_MIN, IMC_EDAD_MESES_NINAS,
+    IMC_EDAD_MESES_NINOS, IMC_OBESIDAD_MIN, IMC_REFERENCIA_INCAP,
+    PESO_ALTURA_NINAS_2_5, PESO_ALTURA_NINOS_2_5,
+    PESO_LONGITUD_NINAS_0_2, PESO_LONGITUD_NINOS_0_2,
+)
+
+__all__ = [name for name in globals() if name.isupper()]
