@@ -4,6 +4,8 @@ from typing import Iterator
 
 from .nutrition import NutritionProfile
 from .prices import GENERAL, RURAL, URBAN, VALID_REGIONS, PricePoint, PriceTimeline
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 
 
 @dataclass
@@ -79,8 +81,6 @@ class Food:
         100 gramos se omiten. Si ``region`` es ``None``, grafica todas las
         regiones disponibles.
         """
-        import matplotlib.dates as mdates
-        import matplotlib.pyplot as plt
 
         if region is not None and region not in VALID_REGIONS:
             raise ValueError(f"Región inválida: {region}")
