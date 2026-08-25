@@ -93,7 +93,7 @@ class CBADataLoader:
                     cost_per_gram=(price_per_100g / 100) if price_per_100g is not None else None,
                     price_per_100g=price_per_100g,
                     daily_grams=_number(row["daily_grams"])/4.77,
-                    daily_cost=_number(row["daily_cost"]),
+                    daily_cost=_number(row["daily_cost"])/4.77,
                     base_unit=str(row["base_unit"]),
                     base_unit_price=_number(row["base_unit_price"]),
                 )
