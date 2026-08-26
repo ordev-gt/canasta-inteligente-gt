@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from ...domain.food import Food, FoodCatalog
-from ...domain.prices import GENERAL, RURAL, URBAN, PricePoint
+from ...domain.prices import GENERAL, RURAL, URBAN, DENSIDADES_PRODUCTOS, PricePoint
 from ..matcher import FoodMatcher
 from ..text import TextNormalizer
 
@@ -133,12 +133,49 @@ class CBADataLoader:
         if unit in {"g", "gm", "gms", "gramo", "gramos"}:
             grams = quantity
         elif unit in {"ml", "mililitro", "mililitros"}:
-            density = 1.030 if "leche" in TextNormalizer.normalize(product) else None
+            nombre_proucto = TextNormalizer.normalize(product)
+            density = None
+            for _producto, _densidad in DENSIDADES_PRODUCTOS.items():
+                if _producto.lower() in nombre_proucto.lower():
+                    density = _densidad
+                    break
             if density is None:
                 return None
             grams = quantity * density
         else:
             return None
+        return price / grams * 100
+
+    @staticmethod
+    def _base_price_per_100g(
+        product: str,
+        price: float | None,
+        quantity: float | None,
+        unit: str,
+    ) -> float | None:
+        """Normaliza el precio de la unidad base a quetzales por 100 gramos."""
+        if price is None or quantity is None or quantity <= 0:
+            return None
+
+        normalized_unit = TextNormalizer.normalize(unit)
+        if normalized_unit in {"g", "gm", "gms", "gramo", "gramos"}:
+            grams = quantity
+        elif normalized_unit in {"ml", "mililitro", "mililitros"}:
+            normalized_product = TextNormalizer.normalize(product)
+            density = next(
+                (
+                    value
+                    for density_product, value in DENSIDADES_PRODUCTOS.items()
+                    if TextNormalizer.normalize(density_product) in normalized_product
+                ),
+                None,
+            )
+            if density is None:
+                return None
+            grams = quantity * density
+        else:
+            return None
+
         return price / grams * 100
 
     def _load_regional_workbook(self, catalog: FoodCatalog, path: Path, region: str) -> None:
@@ -175,17 +212,23 @@ class CBADataLoader:
                 raise ValueError(f"Mes no reconocido: {row[month_col]}")
             daily_grams = _number(row[daily_grams_col])
             daily_cost = _number(row[daily_cost_col])
-            cost_per_gram = daily_cost / daily_grams if daily_cost is not None and daily_grams else None
+            base_quantity = _number(row[base_quantity_col])
+            base_unit = str(row[base_unit_col]).strip()
+            base_unit_price = _number(row[base_price_col])
+            price_per_100g = self._base_price_per_100g(
+                name, base_unit_price, base_quantity, base_unit
+            )
+            cost_per_gram = price_per_100g / 100 if price_per_100g is not None else None
             point = PricePoint(
                 year=int(row[year_col]), month=MONTHS[month_name], region=region,
                 original_name=name, source=path.name,
                 cost_per_gram=cost_per_gram,
-                price_per_100g=(cost_per_gram * 100) if cost_per_gram is not None else None,
+                price_per_100g=price_per_100g,
                 daily_grams=daily_grams, monthly_grams=_number(row[monthly_grams_col]),
                 daily_cost=daily_cost, monthly_cost=_number(row[monthly_cost_col]),
                 daily_kcal=_number(row[daily_kcal_col]), monthly_kcal=_number(row[monthly_kcal_col]),
-                base_quantity=_number(row[base_quantity_col]), base_unit=str(row[base_unit_col]),
-                base_unit_price=_number(row[base_price_col]),
+                base_quantity=base_quantity, base_unit=base_unit,
+                base_unit_price=base_unit_price,
             )
             food = self._resolve_food(catalog, name, point)
             food.add_price_point(point)

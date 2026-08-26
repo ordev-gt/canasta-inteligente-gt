@@ -6,7 +6,15 @@ GENERAL = "general"
 RURAL = "rural"
 URBAN = "urbana"
 VALID_REGIONS = frozenset({GENERAL, RURAL, URBAN})
-
+DENSIDADES_PRODUCTOS = {
+    "LECHE": 1.03, # liquida
+    "CREMA": 1.00,
+    "ACEITE": 0.92,
+    "GASEOSAS": 1.04,
+    "JUGOS DE FRUTAS": 1.04,
+    "AGUA PURIFICADA": 1.00,
+    "ATOL": 1.05,
+}
 
 @dataclass(frozen=True)
 class PricePoint:

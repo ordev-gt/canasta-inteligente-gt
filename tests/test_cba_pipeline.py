@@ -1,6 +1,7 @@
 import unittest
 
 from canasta_inteligente.application.cba_pipeline import build_cba_catalog
+from canasta_inteligente.data.ine.cba_loader import CBADataLoader
 from canasta_inteligente.domain.food import Food, FoodCatalog
 from canasta_inteligente.domain.prices import GENERAL, RURAL, URBAN, PricePoint
 
@@ -171,6 +172,29 @@ class CBAPipelineIntegrationTests(unittest.TestCase):
             self.assertAlmostEqual(general.cost_per_gram, (rural.cost_per_gram + urban.cost_per_gram) / 2)
             return
         self.fail("No se generó ninguna media regional")
+
+
+class CBAPriceNormalizationTests(unittest.TestCase):
+    def test_base_price_is_normalized_from_grams(self):
+        price = CBADataLoader._base_price_per_100g(
+            "Frijoles negros, secos", 9.08, 454, "Gramos"
+        )
+
+        self.assertAlmostEqual(price, 2.0)
+
+    def test_milliliters_are_converted_with_product_density(self):
+        price = CBADataLoader._base_price_per_100g(
+            "Leche entera líquida industrializada", 10.30, 1000, "Mililitros"
+        )
+
+        self.assertAlmostEqual(price, 1.0)
+
+    def test_liquid_without_known_density_has_no_normalized_price(self):
+        price = CBADataLoader._base_price_per_100g(
+            "Bebida líquida sin densidad configurada", 5.0, 1000, "Mililitros"
+        )
+
+        self.assertIsNone(price)
 
 
 if __name__ == "__main__":
