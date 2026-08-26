@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from statistics import fmean, pvariance
 from typing import Iterator
 
 
@@ -42,6 +43,15 @@ class PricePoint:
         if not 1 <= self.month <= 12:
             raise ValueError(f"Mes inválido: {self.month}")
 
+    @property
+    def energy_per_100g(self) -> float | None:
+        if self.daily_kcal is None or self.daily_grams is None:
+            return None
+
+        if self.daily_grams <= 0:
+            raise ValueError("daily_grams debe ser mayor que cero")
+
+        return 100 * self.daily_kcal / self.daily_grams
 
 class PriceTimeline:
     """Serie de precios de una única región, indexada por ``(año, mes)``."""
@@ -68,6 +78,30 @@ class PriceTimeline:
         for _, point in self._points.items():
             accumulated_grams += point.daily_grams
         return accumulated_grams / len(self._points)
+
+    def avg_energy(self):
+        """Resume la energía histórica, expresada en kcal por 100 g."""
+        observations = [(date, point.energy_per_100g) for date, point in self._points.items() if point.energy_per_100g is not None ]
+        if not observations:
+            return None
+
+        dates_used = [date for date, _ in observations]
+        values = [energy for _, energy in observations]
+        avg = fmean(values)
+        variance = pvariance(values)
+        std_dev = variance ** 0.5
+        coefficient_of_variation = std_dev / avg if avg != 0 else None
+
+        return {
+            "avg": avg,
+            "variance": variance,
+            "std_dev": std_dev,
+            "coefficient_of_variation": coefficient_of_variation,
+            "min": min(values),
+            "max": max(values),
+            "count": len(values),
+            "dates_used": dates_used,
+        }
     
     def __contains__(self, key: tuple[int, int]) -> bool:
         return key in self._points

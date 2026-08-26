@@ -19,7 +19,23 @@ def enrich_catalog_with_incap(
     catalog: FoodCatalog,
     incap_pdf: str | Path = DEFAULT_INCAP_PDF,
     min_probability: float = 0.50,
+    minimum_probability: float = 0.20,
+    probability_step: float = 0.05,
+    initial_energy_tolerance: float = 30,
+    maximum_energy_tolerance: float = 75,
+    energy_tolerance_step: float = 20,
+    maximum_attempts: int = 7,
+    top_n: int = 25,
 ) -> dict[str, int]:
     """Segunda etapa: empareja el catálogo CBA terminado con el INCAP."""
     loader = Nutrition_INCAP(str(incap_pdf))
-    return INCAPNutritionEnricher(loader, min_probability).enrich(catalog)
+    return INCAPNutritionEnricher(loader, min_probability).enrich(
+        catalog,
+        minimum_probability=minimum_probability,
+        probability_step=probability_step,
+        initial_energy_tolerance=initial_energy_tolerance,
+        maximum_energy_tolerance=maximum_energy_tolerance,
+        energy_tolerance_step=energy_tolerance_step,
+        maximum_attempts=maximum_attempts,
+        top_n=top_n,
+    )

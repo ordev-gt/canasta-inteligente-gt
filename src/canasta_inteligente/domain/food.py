@@ -6,6 +6,7 @@ from .nutrition import NutritionProfile
 from .prices import GENERAL, RURAL, URBAN, VALID_REGIONS, PricePoint, PriceTimeline
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 @dataclass
@@ -18,6 +19,7 @@ class Food:
     nutrition: NutritionProfile | None = None
     nutrition_match_score: float | None = None
     nutrition_match_methods: tuple[str, ...] = ()
+    nutrition_candidates: pd.DataFrame = field(default_factory=pd.DataFrame, repr=False)
 
     def add_price_point(self, point: PricePoint, *, replace: bool = False) -> None:
         timeline = self.price_timelines.setdefault(point.region, PriceTimeline(point.region))
@@ -122,7 +124,16 @@ class Food:
         fig.tight_layout()
         return fig, ax
 
+    def avg_energy(self, region: str | None = None):
+        if region is not None and region not in self.price_timelines.keys():
+            raise KeyError("Invalid region")
 
+        if region is not None:
+            return self.price_timelines[region].avg_energy()
+        return {_region: _timeline.avg_energy() for _region, _timeline in  self.price_timelines.items()}
+            
+
+        
 class FoodCatalog:
     """Colección de alimentos canónicos compartida por todas las fuentes."""
 
@@ -148,6 +159,15 @@ class FoodCatalog:
 
     def get(self, food_id: str) -> Food:
         return self._foods[food_id]
+
+    def remove(self, food: str | Food) -> Food:
+        """Elimina un alimento del catálogo y todos sus alias registrados."""
+        member = self._resolve_member(food)
+        for alias, food_id in tuple(self._aliases.items()):
+            if food_id == member.id:
+                del self._aliases[alias]
+        del self._foods[member.id]
+        return member
 
     def merge_foods(
         self,
