@@ -7,7 +7,9 @@ from .prices import GENERAL, RURAL, URBAN, VALID_REGIONS, PricePoint, PriceTimel
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import pandas as pd
+from typing import Literal
 
+PhytateLevel = Literal["low", "medium", "high", "unknown"]
 
 @dataclass
 class Food:
@@ -20,6 +22,32 @@ class Food:
     nutrition_match_score: float | None = None
     nutrition_match_methods: tuple[str, ...] = ()
     nutrition_candidates: pd.DataFrame = field(default_factory=pd.DataFrame, repr=False)
+
+    is_meat:bool = False
+
+    def __getitem__(self, name):
+        exclude = (
+            'match_probability',
+            'match_methods',
+            'energy_difference_kcal',
+            'energy_difference_pct',
+            'search_query'
+        )
+
+        valid_keys = list(self.nutrition.values_per_100g.keys())
+
+        err = (
+            f"Invalid nutrient key {name}, "
+            f"some valid keys are: {valid_keys[:3]}"
+        )
+
+        if name in exclude:
+            raise KeyError(err)
+
+        if name not in self.nutrition.values_per_100g:
+            raise KeyError(err)
+
+        return self.nutrition.values_per_100g[name]
 
     def add_price_point(self, point: PricePoint, *, replace: bool = False) -> None:
         timeline = self.price_timelines.setdefault(point.region, PriceTimeline(point.region))
@@ -159,6 +187,13 @@ class FoodCatalog:
 
     def get(self, food_id: str) -> Food:
         return self._foods[food_id]
+
+    def remove_by_name(self, foodname:str):
+        for item in self.items:
+            if item.name == foodname:
+                return self.remove(item)
+
+        return None
 
     def remove(self, food: str | Food) -> Food:
         """Elimina un alimento del catálogo y todos sus alias registrados."""

@@ -23,11 +23,18 @@ class Nutrition_INCAP(DataLoader):
     }
     categories: dict
 
+    """
+    La edición impresa de la TCA-INCAP 2018 parece presentar una transposición sistemática de los encabezados
+    correspondientes a fibra dietética y ceniza. Los valores contenidos en las filas mantienen el orden
+    fibra-ceniza utilizado por las fuentes originales, incluyendo USDA, pero los encabezados de la tabla
+    aparecen como ceniza-fibra.
+    """
+
     COLS_MACRO: List[str] = [
         "codigo", "nombre", "agua_pct", "energia_kcal",
         "proteina_g", "grasa_total_g", "ag_sat_g", "ag_mono_g", "ag_poli_g",
-        "colesterol_mg", "carbohidratos_g", "azucares_g", "ceniza_g",
-        "fibra_dietetica_g", "calcio_mg", "hierro_mg", "magnesio_mg",
+        "colesterol_mg", "carbohidratos_g", "azucares_g", "fibra_dietetica_g",
+        "ceniza_g", "calcio_mg", "hierro_mg", "magnesio_mg",
         "fosforo_mg", "potasio_mg", "sodio_mg", "zinc_mg", "cobre_mg",
         "selenio_mcg", "fraccion_comestible_pct", "_extra",
     ]

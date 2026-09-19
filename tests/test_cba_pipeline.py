@@ -1,9 +1,16 @@
 import unittest
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
 
-from canasta_inteligente.application.cba_pipeline import build_cba_catalog
+from canasta_inteligente.application.cba_pipeline import (
+    build_cba_catalog,
+    load_catalog_pickle,
+    process_cba_pipeline,
+    save_catalog_pickle,
+)
 from canasta_inteligente.data.incap import INCAPNutritionEnricher
 from canasta_inteligente.data.ine.cba_loader import CBADataLoader
 from canasta_inteligente.domain.food import Food, FoodCatalog
@@ -391,6 +398,30 @@ class INCAPNutritionEnricherTests(unittest.TestCase):
             self.enricher._category_for("1016"),
             "LÁCTEOS Y SIMILARES",
         )
+
+
+class CBAPersistenceTests(unittest.TestCase):
+    def test_catalog_pickle_round_trip(self):
+        catalog = FoodCatalog()
+        catalog.add(Food("arroz", "Arroz"))
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "catalog.pkl"
+            self.assertEqual(save_catalog_pickle(catalog, output), output)
+            loaded = load_catalog_pickle(output)
+
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded.get("arroz").name, "Arroz")
+
+    def test_pipeline_consolidates_and_saves_without_incap(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "cba.pkl"
+            catalog, summary = process_cba_pipeline(output_path=output, enrich=False)
+            loaded = load_catalog_pickle(output)
+
+        self.assertEqual(summary, {"foods": 77, "matched": 0, "unmatched": 77})
+        self.assertEqual(len(catalog), 77)
+        self.assertEqual(len(loaded), 77)
+        self.assertIn("Arroz corriente", loaded.get("arroz").aliases)
 
 
 if __name__ == "__main__":

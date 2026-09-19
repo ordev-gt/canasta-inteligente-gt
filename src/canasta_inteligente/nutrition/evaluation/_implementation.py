@@ -869,7 +869,7 @@ class AcidoPantotenico:
 
         for edad_maxima, requerimiento in requerimientos.items():
             if p.edad < edad_maxima:
-                return {'ia': requerimiento, 'rpe': None, 'rdd': None, 'unidad': 'mg'}
+                return {'ia': requerimiento + acido_adicional, 'rpe': None, 'rdd': None, 'unidad': 'mg'}
 
         raise ValueError(f"No se encontraron requerimientos de ácido pantoténico {p.edad} y sexo {p.sexo}")
 
@@ -1056,7 +1056,7 @@ class Calcio:
         unidad = 'mg'
         for max_age, requerimiento in INGESTA_ADECUADA_CALCIO.items(): 
             if p.edad < max_age:
-                return {'ia': requerimiento, 'imt':IMT_NINOS_Y_ADULTOS_CALCIO, 'rpe: None, ''rdd': None,'unidad': unidad }
+                return {'ia': requerimiento, 'imt':IMT_NINOS_Y_ADULTOS_CALCIO, 'rpe': None, 'rdd': None,'unidad': unidad }
         raise ValueError(f'No se encontro requerimiento de calcio para edad {p.edad}')
 
 class Fosforo:

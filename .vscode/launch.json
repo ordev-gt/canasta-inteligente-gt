@@ -11,6 +11,50 @@
                 "PYTHONPATH": "${workspaceFolder}/src"
             },
             "console": "integratedTerminal"
+        },
+                {
+            "name": "pulp test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.app.main",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/notebooks"
+            },
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Debug CBA pipeline (con INCAP)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.application.cba_pipeline",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": [
+                "--output",
+                "${workspaceFolder}/data/processed/cba_catalog.pkl"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug CBA pipeline (sin INCAP)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.application.cba_pipeline",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src"
+            },
+            "args": [
+                "--without-incap",
+                "--output",
+                "${workspaceFolder}/data/processed/cba_solo_precios.pkl"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
