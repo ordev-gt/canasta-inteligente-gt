@@ -8,3 +8,5 @@ Requires-Dist: pyarrow>=13.0.0
 Requires-Dist: pdfplumber
 Requires-Dist: rapidfuzz
 Requires-Dist: openpyxl
+Requires-Dist: matplotlib
+Requires-Dist: pulp<4,>=3.3

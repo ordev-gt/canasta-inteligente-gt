@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Iterator
+from copy import deepcopy
 
 from .nutrition import NutritionProfile
 from .prices import GENERAL, RURAL, URBAN, VALID_REGIONS, PricePoint, PriceTimeline
@@ -169,15 +170,20 @@ class FoodCatalog:
         self._foods: dict[str, Food] = {}
         self._aliases: dict[str, str] = {}
 
-    def reset_aliases(self):
+
+    def reload_aliases(self):
+
         new_aliases = {}
         
-        for food_id, food in self._foods().items():
+        for food_id, food in self._foods.items():
             for alias in food.aliases:
-                if alias not in new_aliases:
-                    new_aliases[alias] =  food_id
+                alias_normalized = alias.lower().replace(" ", "_")
+                if alias_normalized not in new_aliases:
+                    new_aliases[alias_normalized] =  food_id
                 else:
-                    new_aliases[alias] =  new_aliases[alias].append([food_id])
+                    new_aliases[alias_normalized] =  [new_aliases[alias_normalized]].append(food_id)
+        
+        self._aliases = new_aliases
                     
 
     def resolve_by_alias(self, alias):

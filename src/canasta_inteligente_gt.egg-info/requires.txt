@@ -3,3 +3,5 @@ pyarrow>=13.0.0
 pdfplumber
 rapidfuzz
 openpyxl
+matplotlib
+pulp<4,>=3.3
