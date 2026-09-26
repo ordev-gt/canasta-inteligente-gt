@@ -1,7 +1,6 @@
-"""Demo Tkinter del experimento de dieta, sin ejecutar ni leer el notebook."""
+"""Canasta personal y familiar en Tkinter, con aportes nutricionales por alimento."""
 
 import argparse
-from math import isfinite
 from pathlib import Path
 from queue import Empty, Queue
 from threading import Thread
@@ -11,113 +10,15 @@ from tkinter.scrolledtext import ScrolledText
 
 import pandas as pd
 
-from canasta_inteligente.application.cba_pipeline import DEFAULT_PICKLE, load_catalog_pickle
-from canasta_inteligente.application.optimizacion_dieta import (
-    maximizar_cobertura,
-    minimizar_costo,
-    preparar_consulta,
-    tabla_nutrientes,
-    validar_catalogo,
+from canasta_inteligente.application.cba_pipeline import DEFAULT_PICKLE
+from canasta_inteligente.application.cba_pipeline import load_catalog_pickle
+from canasta_inteligente.application.demo_canasta import (
+    ejecutar_canasta, seleccionar_catalogo_region, tabla_alimentos,
 )
-from canasta_inteligente.domain.persona import Persona
-
-
-def numero(texto, nombre, minimo=0, estricto=False, maximo=None, entero=False):
-    try:
-        valor = float(str(texto).strip().replace(',', '.'))
-    except ValueError:
-        raise ValueError(f'{nombre}: ingresa un número válido.') from None
-    if (not isfinite(valor) or valor < minimo or (estricto and valor == minimo)
-            or (maximo is not None and valor > maximo) or (entero and not valor.is_integer())):
-        limite = 'mayor que' if estricto else 'mayor o igual a'
-        raise ValueError(f'{nombre}: debe ser {limite} {minimo}'
-                         + (f' y menor o igual a {maximo}' if maximo is not None else '')
-                         + (' y entero.' if entero else '.'))
-    return int(valor) if entero else valor
-
-
-def leer_pesos(texto):
-    pesos = {}
-    for linea in texto.splitlines():
-        if not linea.strip():
-            continue
-        nombre, separador, valor = linea.partition('=')
-        nombre = nombre.strip()
-        if not separador or not nombre:
-            raise ValueError('Escribe cada peso como nutriente = valor, uno por línea.')
-        if nombre in pesos:
-            raise ValueError(f'El peso de {nombre} aparece más de una vez.')
-        pesos[nombre] = numero(valor, f'Peso de {nombre}')
-    return pesos
-
-
-def crear_persona(datos):
-    mujer = datos['sexo'] == 'mujer'
-    embarazo = mujer and datos['embarazo']
-    lactancia = mujer and datos['lactancia']
-    return Persona(
-        nombre=datos['nombre'].strip() or 'Persona demo',
-        edad=numero(datos['edad'], 'Edad'),
-        sexo=datos['sexo'],
-        peso=numero(datos['peso'], 'Peso', estricto=True),
-        altura=numero(datos['altura'], 'Talla', estricto=True),
-        naf={'Baja': 'low', 'Moderada': 'moderate', 'Alta': 'high'}[datos['actividad']],
-        exposicion_solar_suficiente=datos['solar'],
-        padece_sudoracion_profusa=datos['sudoracion'],
-        esta_embarazada=embarazo,
-        esta_en_lactancia=lactancia,
-        peso_preembarazo=numero(datos['peso_previo'], 'Peso previo', estricto=True)
-        if embarazo or lactancia else None,
-        mes_de_embarazo=numero(datos['mes_embarazo'], 'Mes de embarazo', minimo=1,
-                              maximo=9, entero=True) if embarazo else None,
-        mes_de_lactancia=numero(datos['mes_lactancia'], 'Mes de lactancia', minimo=1,
-                               entero=True) if lactancia else None,
-        reservas_de_energia_maternales=embarazo and datos['reservas'],
-    )
-
-
-def ejecutar_demo(persona, catalog_path, modo, presupuesto=15, pesos=None,
-                  penalizaciones_min=None, penalizaciones_max=None):
-    """Entrada sin interfaz, también útil para pruebas y otras aplicaciones."""
-    consulta = preparar_consulta(persona)
-    consulta.update(resultados=[], propuestas={})
-    if modo == 'Solo requerimientos':
-        return consulta
-    if modo not in ('Comparar ambos', 'Costo mínimo', 'Con presupuesto'):
-        raise ValueError(f'Modo desconocido: {modo}')
-    ruta = Path(catalog_path).expanduser()
-    if not ruta.is_file():
-        raise ValueError(
-            f'No se encontró el catálogo: {ruta}\n'
-            'Genera data/processed/cba_catalog.pkl ejecutando '
-            'python -m canasta_inteligente.application.cba_pipeline.'
-        )
-    catalog = load_catalog_pickle(ruta)
-    validar_catalogo(catalog, consulta['escenarios_minimizacion'])
-    consulta['cantidad_alimentos'] = len(catalog)
-    consulta['catalogo'] = str(ruta.resolve())
-    if modo in ('Comparar ambos', 'Costo mínimo'):
-        resultados = minimizar_costo(catalog, consulta['escenarios_minimizacion'], penalizaciones_min)
-        for resultado in resultados:
-            resultado['tipo'] = 'Costo mínimo'
-        optimos = [r for r in resultados if r['estado'] == 'Optimal']
-        consulta['propuestas']['Costo mínimo'] = min(
-            optimos, key=lambda r: (r['valor_objetivo'], r['costo_total_q']), default=None,
-        )
-        consulta['resultados'].extend(resultados)
-    if modo in ('Comparar ambos', 'Con presupuesto'):
-        resultados = maximizar_cobertura(
-            catalog, consulta['escenarios_maximizacion'], presupuesto, pesos, penalizaciones_max,
-        )
-        for resultado in resultados:
-            resultado['tipo'] = 'Con presupuesto'
-        optimos = [r for r in resultados if r['estado'] == 'Optimal']
-        consulta['propuestas']['Con presupuesto'] = max(
-            optimos, key=lambda r: (r['valor_objetivo'], -r['costo_total_q']), default=None,
-        )
-        consulta['resultados'].extend(resultados)
-        consulta['presupuesto_q'] = presupuesto
-    return consulta
+from canasta_inteligente.application.demo_dieta import (
+    crear_persona, ejecutar_demo, leer_pesos, numero,
+)
+from canasta_inteligente.application.optimizacion_dieta import tabla_nutrientes
 
 
 def formato(valor):
@@ -209,10 +110,26 @@ class AportesPorAlimento(ttk.Frame):
                          + (' · Porcentaje no definido porque el total es cero.' if total == 0 else ''))
 
 
+class FormularioDesplazable(ttk.Frame):
+    """Mantiene accesibles los campos del perfil en pantallas pequeñas."""
+
+    def __init__(self, parent):
+        super().__init__(parent, width=390)
+        canvas = tk.Canvas(self, width=370, highlightthickness=0)
+        barra = ttk.Scrollbar(self, orient='vertical', command=canvas.yview)
+        canvas.configure(yscrollcommand=barra.set)
+        barra.pack(side='right', fill='y')
+        canvas.pack(side='left', fill='both', expand=True)
+        self.contenido = ttk.Frame(canvas, padding=8)
+        ventana = canvas.create_window((0, 0), window=self.contenido, anchor='nw')
+        self.contenido.bind('<Configure>', lambda event: canvas.configure(scrollregion=canvas.bbox('all')))
+        canvas.bind('<Configure>', lambda event: canvas.itemconfigure(ventana, width=event.width))
+
+
 class DemoDieta(tk.Tk):
     def __init__(self, catalog_path=DEFAULT_PICKLE):
         super().__init__()
-        self.title('Canasta Inteligente GT · Demo de optimización de dieta')
+        self.title('Canasta Inteligente GT · Dieta personal y familiar')
         self.geometry('1280x820')
         self.minsize(1000, 680)
         self.cola = Queue()
@@ -220,6 +137,12 @@ class DemoDieta(tk.Tk):
         self.consulta = None
         self.seleccionado = None
         self.variables = {}
+        self.miembros = []
+        self.limites = {}
+        self.exclusiones = set()
+        self.alimentos_catalogo = {}
+        self.revision = 0
+        self.resultados = []
         self.protocol('WM_DELETE_WINDOW', self.cerrar)
         estilo = ttk.Style(self)
         if 'clam' in estilo.theme_names():
@@ -228,55 +151,99 @@ class DemoDieta(tk.Tk):
         estilo.configure('Title.TLabel', font=('Segoe UI', 17, 'bold'))
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
-
         cabecera = ttk.Frame(self, padding=(16, 12))
         cabecera.grid(row=0, column=0, sticky='ew')
         ttk.Label(cabecera, text='Canasta Inteligente GT', style='Title.TLabel').pack(anchor='w')
-        ttk.Label(cabecera, text='Una persona · Un día · Costos en quetzales (Q)').pack(anchor='w')
-        cuerpo = ttk.Panedwindow(self, orient='horizontal')
-        cuerpo.grid(row=1, column=0, sticky='nsew', padx=12)
-        izquierda = ttk.Frame(cuerpo, width=340)
-        derecha = ttk.Frame(cuerpo)
-        cuerpo.add(izquierda, weight=0)
-        cuerpo.add(derecha, weight=1)
-        controles = ttk.Notebook(izquierda)
-        controles.pack(fill='both', expand=True)
-        perfil = ttk.Frame(controles, padding=10)
-        modelo = ttk.Frame(controles, padding=10)
-        controles.add(perfil, text='Perfil')
-        controles.add(modelo, text='Modelo y pesos')
-        self.crear_perfil(perfil)
-        self.crear_modelo(modelo, catalog_path)
-        self.boton_req = ttk.Button(izquierda, text='Ver requerimientos', command=lambda: self.iniciar(True))
-        self.boton_req.pack(fill='x', pady=(10, 4))
-        self.boton_ejecutar = ttk.Button(izquierda, text='Ejecutar optimización', command=self.iniciar)
-        self.boton_ejecutar.pack(fill='x', pady=4)
-        self.progreso = ttk.Progressbar(izquierda, mode='indeterminate')
-        self.progreso.pack(fill='x', pady=(4, 10))
+        ttk.Label(cabecera, text='Agrega una persona para su dieta personal o varios integrantes para la canasta familiar.').pack(anchor='w')
+        self.pasos = ttk.Notebook(self)
+        self.pasos.grid(row=1, column=0, sticky='nsew', padx=12)
+        self.paginas = [ttk.Frame(self.pasos, padding=10) for _ in range(4)]
+        for pagina, titulo in zip(self.paginas, (
+            '1. Integrantes', '2. Configuración', '3. Calcular canasta', '4. Resultados',
+        )):
+            self.pasos.add(pagina, text=titulo)
 
+        integrantes = self.paginas[0]
+        formulario = FormularioDesplazable(integrantes)
+        formulario.pack(side='left', fill='y', padx=(0, 16))
+        perfil = formulario.contenido
+        self.crear_perfil(perfil)
+        ttk.Button(perfil, text='Agregar integrante', command=self.agregar_miembro).grid(
+            row=15, column=0, columnspan=2, sticky='ew', pady=8)
+        lista = ttk.Frame(integrantes)
+        lista.pack(side='left', fill='both', expand=True)
+        self.resumen_miembros = tk.StringVar(value='Todavía no has agregado integrantes.')
+        ttk.Label(lista, textvariable=self.resumen_miembros).pack(anchor='w', pady=8)
+        self.tabla_miembros = Tabla(lista, height=8)
+        self.tabla_miembros.pack(fill='both', expand=True)
+        acciones = ttk.Frame(lista)
+        acciones.pack(fill='x', pady=8)
+        for texto, comando in (
+            ('Cargar seleccionado en el formulario', self.editar_miembro),
+            ('Guardar cambios', self.guardar_miembro), ('Eliminar', self.eliminar_miembro),
+        ):
+            ttk.Button(acciones, text=texto, command=comando).pack(side='left', padx=(0, 8))
+        self.crear_configuracion(self.paginas[1], catalog_path)
+
+        calcular = self.paginas[2]
+        ttk.Label(calcular, text='Revisa la canasta que vas a calcular', style='Title.TLabel').pack(anchor='w', pady=12)
+        self.revision_texto = tk.StringVar()
+        ttk.Label(calcular, textvariable=self.revision_texto, justify='left', wraplength=950).pack(anchor='w', pady=12)
+        self.boton_req = ttk.Button(calcular, text='Ver requerimientos de los integrantes', command=lambda: self.iniciar(True))
+        self.boton_req.pack(anchor='w', pady=8)
+        self.boton_ejecutar = ttk.Button(calcular, text='Calcular canasta', command=self.iniciar, state='disabled')
+        self.boton_ejecutar.pack(anchor='w', pady=8)
+        self.progreso = ttk.Progressbar(calcular, mode='indeterminate')
+        self.progreso.pack(fill='x', pady=12)
+
+        derecha = self.paginas[3]
         derecha.columnconfigure(0, weight=1)
-        derecha.rowconfigure(2, weight=1)
-        self.resumen = tk.StringVar(value='Completa el perfil y ejecuta la optimización para comparar los escenarios.')
+        derecha.rowconfigure(3, weight=1)
+        self.resumen = tk.StringVar(value='Agrega integrantes y calcula una canasta.')
         ttk.Label(derecha, textvariable=self.resumen, wraplength=760, padding=10).grid(row=0, column=0, sticky='ew')
-        self.escenarios = Tabla(derecha, height=8)
-        self.escenarios.grid(row=1, column=0, sticky='nsew', padx=8)
+        barra = ttk.Frame(derecha)
+        barra.grid(row=1, column=0, sticky='ew', padx=8, pady=4)
+        ttk.Label(barra, text='Dieta:').pack(side='left')
+        self.vista = tk.StringVar()
+        self.selector_vista = ttk.Combobox(barra, textvariable=self.vista, state='disabled', width=40)
+        self.selector_vista.pack(side='left', padx=8)
+        self.selector_vista.bind('<<ComboboxSelected>>', self.cambiar_vista)
+        ttk.Label(barra, text='★ Propuesta elegida · Selecciona un modelo o escenario').pack(side='left')
+        self.escenarios = Tabla(derecha, height=4)
+        self.escenarios.grid(row=2, column=0, sticky='ew', padx=8)
         self.escenarios.tree.bind('<<TreeviewSelect>>', self.seleccionar)
         self.detalles = ttk.Notebook(derecha)
-        self.detalles.grid(row=2, column=0, sticky='nsew', padx=8, pady=8)
+        self.detalles.grid(row=3, column=0, sticky='nsew', padx=8, pady=8)
         self.tablas = {}
-        for nombre in ('Alimentos', 'Nutrientes', 'Requerimientos', 'Diagnóstico'):
+        for nombre, titulo in (
+            ('Alimentos', 'Alimentos / día'), ('Compra del período', 'Compra del período'),
+            ('Nutrientes', 'Nutrientes / día'), ('Requerimientos', 'Requerimientos'),
+            ('Comparación de repartos', 'Repartos'), ('Reparto del período', 'Distribución'),
+            ('Diagnóstico', 'Diagnóstico'),
+        ):
             tabla = Tabla(self.detalles)
             self.tablas[nombre] = tabla
-            self.detalles.add(tabla, text=nombre)
+            self.detalles.add(tabla, text=titulo)
         self.aportes_alimentos = AportesPorAlimento(self.detalles)
-        self.detalles.insert(2, self.aportes_alimentos, text='Aporte por alimento')
+        self.detalles.insert(3, self.aportes_alimentos, text='Aporte por alimento')
         self.notas = ScrolledText(self.detalles, wrap='word', padx=12, pady=12, state='disabled')
-        self.detalles.add(self.notas, text='Detalle y supuestos')
-        self.boton_exportar = ttk.Button(derecha, text='Exportar alimentos del escenario a CSV',
+        self.detalles.add(self.notas, text='Notas')
+        self.boton_exportar = ttk.Button(derecha, text='Exportar compra y nutrientes del período a CSV',
                                         command=self.exportar, state='disabled')
-        self.boton_exportar.grid(row=3, column=0, sticky='e', padx=8, pady=(0, 8))
-        self.estado = tk.StringVar(value='Listo. El perfil inicial corresponde al código del notebook: 25 años y 70 kg.')
-        ttk.Label(self, textvariable=self.estado, padding=(16, 8)).grid(row=2, column=0, sticky='ew')
+        self.boton_exportar.grid(row=4, column=0, sticky='e', padx=8, pady=(0, 8))
+        pie = ttk.Frame(self, padding=(16, 6))
+        pie.grid(row=2, column=0, sticky='ew')
+        ttk.Button(pie, text='Anterior', command=lambda: self.avanzar(-1)).pack(side='left')
+        ttk.Button(pie, text='Siguiente', command=lambda: self.avanzar(1)).pack(side='right')
+        self.estado = tk.StringVar(value='Agrega el primer integrante para comenzar.')
+        ttk.Label(self, textvariable=self.estado, padding=(16, 8)).grid(row=3, column=0, sticky='ew')
+        for clave in ('dias', 'presupuesto', 'modo', 'min_energia', 'min_colesterol', 'max_energia', 'max_colesterol'):
+            self.variables[clave].trace_add('write', lambda *args: self.invalidar())
+        self.variables['catalogo'].trace_add('write', self.cambio_catalogo)
+        self.variables['region'].trace_add('write', self.cambio_region)
+        self.pesos.bind('<<Modified>>', self.cambio_pesos)
+        self.actualizar_revision()
+        self.after_idle(self.cargar_catalogo)
 
     def campo(self, parent, fila, texto, clave, valor, opciones=None):
         ttk.Label(parent, text=texto).grid(row=fila, column=0, sticky='w', pady=4)
@@ -330,95 +297,312 @@ class DemoDieta(tk.Tk):
                                   (self.mes_lactancia, lactancia), (self.peso_previo, embarazo or lactancia)):
             widget.configure(state='normal' if habilitar else 'disabled')
 
-    def crear_modelo(self, parent, catalog_path):
-        self.campo(parent, 0, 'Modelo', 'modo', 'Comparar ambos',
-                   ('Comparar ambos', 'Costo mínimo', 'Con presupuesto'))
-        self.campo(parent, 1, 'Presupuesto diario Q', 'presupuesto', '15')
-        ttk.Label(parent, text='Penalización por kcal / mg de desviación', wraplength=300).grid(
-            row=2, column=0, columnspan=2, sticky='w', pady=(12, 4))
-        self.campo(parent, 3, 'Costo: energía', 'min_energia', '1')
-        self.campo(parent, 4, 'Costo: colesterol', 'min_colesterol', '0.1')
-        self.campo(parent, 5, 'Cobertura: energía', 'max_energia', '1')
-        self.campo(parent, 6, 'Cobertura: colesterol', 'max_colesterol', '0.1')
-        ttk.Label(parent, text='Pesos para cobertura (omitidos = 1).\n0 = sin puntuación; 2 = doble importancia.',
-                  wraplength=300).grid(row=7, column=0, columnspan=2, sticky='w', pady=(12, 4))
-        self.pesos = ScrolledText(parent, height=5, width=30, wrap='none')
-        self.pesos.insert('1.0', 'vitamina_d_mcg = 1\nfibra_dietetica_g = 1\n')
-        self.pesos.grid(row=8, column=0, columnspan=2, sticky='nsew')
-        ttk.Label(parent, text='Usa los nombres de la tabla Nutrientes; un peso por línea.',
-                  wraplength=300).grid(row=9, column=0, columnspan=2, sticky='w', pady=4)
+    def avanzar(self, paso):
+        indice = self.pasos.index(self.pasos.select())
+        self.pasos.select(max(0, min(3, indice + paso)))
+
+    def datos_perfil(self):
+        claves = ('nombre', 'edad', 'sexo', 'peso', 'altura', 'actividad', 'solar',
+                  'sudoracion', 'embarazo', 'lactancia', 'peso_previo', 'mes_embarazo',
+                  'mes_lactancia', 'reservas')
+        datos = {clave: self.variables[clave].get() for clave in claves}
+        if not datos['nombre'].strip():
+            raise ValueError('Ingresa el nombre del integrante.')
+        crear_persona(datos)
+        return datos
+
+    def agregar_miembro(self):
+        try:
+            self.miembros.append(self.datos_perfil())
+        except ValueError as error:
+            messagebox.showerror('Revisa el perfil', str(error), parent=self)
+            return
+        self.actualizar_miembros()
+
+    def editar_miembro(self):
+        seleccion = self.tabla_miembros.tree.selection()
+        if seleccion:
+            for clave, valor in self.miembros[int(seleccion[0])].items():
+                self.variables[clave].set(valor)
+            self.actualizar_maternidad()
+
+    def guardar_miembro(self):
+        seleccion = self.tabla_miembros.tree.selection()
+        if not seleccion:
+            return
+        try:
+            self.miembros[int(seleccion[0])] = self.datos_perfil()
+        except ValueError as error:
+            messagebox.showerror('Revisa el perfil', str(error), parent=self)
+            return
+        self.actualizar_miembros()
+
+    def eliminar_miembro(self):
+        seleccion = self.tabla_miembros.tree.selection()
+        if seleccion:
+            self.miembros.pop(int(seleccion[0]))
+            self.actualizar_miembros()
+
+    def actualizar_miembros(self):
+        self.tabla_miembros.mostrar(pd.DataFrame([
+            {clave: datos[clave] for clave in ('nombre', 'edad', 'sexo', 'peso', 'altura', 'actividad')}
+            for datos in self.miembros
+        ]))
+        cantidad = len(self.miembros)
+        self.resumen_miembros.set(f'{cantidad} integrante(s) · '
+                                  + ('Dieta personal' if cantidad == 1 else 'Canasta familiar'))
+        self.invalidar()
+
+    def crear_configuracion(self, parent, catalog_path):
+        controles = ttk.Notebook(parent)
+        controles.pack(side='left', fill='both', expand=True, padx=(0, 12))
+        general = ttk.Frame(controles, padding=12)
+        avanzado = ttk.Frame(controles, padding=12)
+        controles.add(general, text='Parámetros de la canasta')
+        controles.add(avanzado, text='Modelo y pesos')
+        self.campo(general, 0, 'Número de días', 'dias', '30')
+        self.campo(general, 1, 'Presupuesto total Q', 'presupuesto', '2500')
+        self.campo(general, 2, 'Cálculo', 'modo', 'Con presupuesto',
+                   ('Con presupuesto', 'Costo mínimo'))
+        ttk.Label(general, text='El presupuesto cubre todo el período y todos los integrantes. '
+                  'Costo mínimo calcula sin un tope de presupuesto.', wraplength=420).grid(
+            row=3, column=0, columnspan=2, sticky='w', pady=12)
         self.variables['catalogo'] = tk.StringVar(value=str(catalog_path))
-        ttk.Label(parent, text='Catálogo procesado del proyecto (.pkl)').grid(
-            row=10, column=0, columnspan=2, sticky='w', pady=(12, 4))
-        ttk.Entry(parent, textvariable=self.variables['catalogo']).grid(row=11, column=0, columnspan=2, sticky='ew')
-        ttk.Button(parent, text='Elegir catálogo…', command=self.elegir_catalogo).grid(
-            row=12, column=0, columnspan=2, sticky='ew', pady=4)
-        parent.rowconfigure(8, weight=1)
+        ttk.Label(general, text='Catálogo procesado (.pkl)').grid(row=4, column=0, columnspan=2, sticky='w')
+        ttk.Entry(general, textvariable=self.variables['catalogo']).grid(row=5, column=0, columnspan=2, sticky='ew', pady=8)
+        ttk.Button(general, text='Elegir catálogo…', command=self.elegir_catalogo).grid(row=6, column=0, sticky='ew')
+        ttk.Button(general, text='Cargar alimentos', command=self.cargar_catalogo).grid(row=6, column=1, sticky='ew')
+        self.catalogo_estado = tk.StringVar(value='Catálogo pendiente de cargar.')
+        ttk.Label(general, textvariable=self.catalogo_estado, wraplength=420).grid(row=7, column=0, columnspan=2, sticky='w', pady=12)
+        self.campo(general, 8, 'Región del catálogo', 'region', 'general',
+                   ('general', 'urbana', 'rural'))
+        ttk.Label(general, text='General conserva todos los alimentos y prioriza el precio general '
+                  '(si falta, urbano y luego rural). Urbana y rural usan solo precios de esa región.',
+                  wraplength=420).grid(row=9, column=0, columnspan=2, sticky='w', pady=12)
+        for fila, (texto, clave, valor) in enumerate((
+            ('Costo: energía', 'min_energia', '1'), ('Costo: colesterol', 'min_colesterol', '0.1'),
+            ('Cobertura: energía', 'max_energia', '1'), ('Cobertura: colesterol', 'max_colesterol', '0.1'),
+        )):
+            self.campo(avanzado, fila, texto, clave, valor)
+        ttk.Label(avanzado, text='Penalizaciones por kcal / mg de desviación.\n'
+                  'Pesos de cobertura: nutriente = valor (omitidos = 1).', wraplength=420).grid(
+            row=4, column=0, columnspan=2, sticky='w', pady=12)
+        self.pesos = ScrolledText(avanzado, height=6, width=35)
+        self.pesos.grid(row=5, column=0, columnspan=2, sticky='nsew')
+        self.pesos.insert('1.0', 'vitamina_d_mcg = 1\nfibra_dietetica_g = 1\n')
+        self.pesos.edit_modified(False)
+        avanzado.rowconfigure(5, weight=1)
+
+        restricciones = ttk.LabelFrame(parent, text='Restricciones adicionales', padding=12)
+        restricciones.pack(side='left', fill='both', expand=True)
+        ttk.Label(restricciones, text='Selecciona un alimento para excluirlo o limitarlo.').pack(anchor='w')
+        self.alimento = tk.StringVar()
+        self.selector_alimento = ttk.Combobox(restricciones, textvariable=self.alimento, state='disabled', width=48)
+        self.selector_alimento.pack(fill='x', pady=8)
+        ttk.Button(restricciones, text='Excluir alimento', command=self.excluir_alimento).pack(anchor='w')
+        barra = ttk.Frame(restricciones)
+        barra.pack(fill='x', pady=12)
+        ttk.Label(barra, text='Máximo diario (g por persona):').pack(side='left')
+        self.limite_gramos = tk.StringVar(value='100')
+        ttk.Entry(barra, textvariable=self.limite_gramos, width=10).pack(side='left', padx=8)
+        ttk.Button(restricciones, text='Agregar / actualizar límite', command=self.agregar_limite).pack(anchor='w')
+        ttk.Label(restricciones, text='Los límites se aplican a cada integrante en ambos modelos.\n'
+                  'Una exclusión elimina también el límite de ese alimento.', wraplength=450).pack(anchor='w', pady=8)
+        self.tabla_restricciones = Tabla(restricciones, height=8)
+        self.tabla_restricciones.pack(fill='both', expand=True)
+        ttk.Button(restricciones, text='Eliminar restricción seleccionada', command=self.eliminar_restriccion).pack(anchor='w', pady=8)
 
     def elegir_catalogo(self):
         ruta = filedialog.askopenfilename(parent=self, title='Catálogo generado por este proyecto',
                                           filetypes=[('Catálogo procesado', '*.pkl')])
         if ruta:
             self.variables['catalogo'].set(ruta)
+            self.cargar_catalogo()
+
+    def cambio_catalogo(self, *args):
+        self.alimentos_catalogo = {}
+        self.exclusiones.clear()
+        self.limites.clear()
+        self.selector_alimento.configure(values=(), state='disabled')
+        self.alimento.set('')
+        self.catalogo_estado.set('Carga los alimentos del nuevo catálogo.')
+        self.actualizar_restricciones()
+
+    def cargar_catalogo(self):
+        self.alimentos_catalogo = {}
+        self.selector_alimento.configure(values=(), state='disabled')
+        self.alimento.set('')
+        try:
+            original = load_catalog_pickle(self.variables['catalogo'].get())
+            region = self.variables['region'].get()
+            catalog = seleccionar_catalogo_region(original, region)
+            self.alimentos_catalogo = {f'{food.name} ({food.id})': food.id
+                                       for food in sorted(catalog, key=lambda f: str(f.name).lower())}
+        except Exception as error:
+            self.catalogo_estado.set(f'No se pudo cargar el catálogo: {error}')
+            self.invalidar()
+            return
+        disponibles = set(self.alimentos_catalogo.values())
+        retiradas = len((self.exclusiones | set(self.limites)) - disponibles)
+        self.exclusiones.intersection_update(disponibles)
+        self.limites = {food_id: gramos for food_id, gramos in self.limites.items() if food_id in disponibles}
+        self.actualizar_restricciones()
+        self.selector_alimento.configure(values=list(self.alimentos_catalogo), state='readonly')
+        if self.alimentos_catalogo:
+            self.selector_alimento.current(0)
+        self.catalogo_estado.set(
+            f'Región {region}: {len(catalog)} de {len(original)} alimentos disponibles.'
+            + (f' Se omitieron {len(original) - len(catalog)} sin precio válido en esta región.'
+               if len(catalog) < len(original) else '')
+            + (f' Se retiraron {retiradas} restricciones de alimentos no disponibles.' if retiradas else '')
+        )
+
+    def cambio_region(self, *args):
+        self.invalidar()
+        self.cargar_catalogo()
+
+    def excluir_alimento(self):
+        food_id = self.alimentos_catalogo.get(self.alimento.get())
+        if food_id is not None:
+            self.exclusiones.add(food_id)
+            self.limites.pop(food_id, None)
+            self.actualizar_restricciones()
+
+    def agregar_limite(self):
+        food_id = self.alimentos_catalogo.get(self.alimento.get())
+        if food_id is None:
+            return
+        try:
+            gramos = numero(self.limite_gramos.get(), 'Límite diario', estricto=True)
+        except ValueError as error:
+            messagebox.showerror('Revisa el límite', str(error), parent=self)
+            return
+        self.exclusiones.discard(food_id)
+        self.limites[food_id] = gramos
+        self.actualizar_restricciones()
+
+    def actualizar_restricciones(self):
+        nombres = {food_id: nombre for nombre, food_id in self.alimentos_catalogo.items()}
+        self.filas_restricciones = [
+            {'alimento_id': food_id, 'alimento': nombres.get(food_id, food_id),
+             'restriccion': 'Excluido', 'maximo_g_persona_dia': None}
+            for food_id in sorted(self.exclusiones)
+        ] + [
+            {'alimento_id': food_id, 'alimento': nombres.get(food_id, food_id),
+             'restriccion': 'Límite diario', 'maximo_g_persona_dia': gramos}
+            for food_id, gramos in self.limites.items()
+        ]
+        self.tabla_restricciones.mostrar(pd.DataFrame(self.filas_restricciones))
+        self.invalidar()
+
+    def eliminar_restriccion(self):
+        seleccion = self.tabla_restricciones.tree.selection()
+        if seleccion:
+            food_id = self.filas_restricciones[int(seleccion[0])]['alimento_id']
+            self.exclusiones.discard(food_id)
+            self.limites.pop(food_id, None)
+            self.actualizar_restricciones()
+
+    def cambio_pesos(self, event=None):
+        if self.pesos.edit_modified():
+            self.pesos.edit_modified(False)
+            self.invalidar()
+
+    def actualizar_revision(self):
+        cantidad = len(self.miembros)
+        presupuesto = ('Sin tope de presupuesto' if self.variables['modo'].get() == 'Costo mínimo'
+                       else f"Presupuesto total: Q {self.variables['presupuesto'].get()}")
+        self.revision_texto.set(
+            f"{cantidad} integrante(s): {', '.join(p['nombre'] for p in self.miembros)}\n\n"
+            f"Período: {self.variables['dias'].get()} días · {presupuesto}\n\n"
+            f"Región del catálogo: {self.variables['region'].get()}\n\n"
+            f'{len(self.exclusiones)} alimento(s) excluido(s) · {len(self.limites)} límite(s) diarios por persona.\n\n'
+            'Podrás consultar la compra del período, los escenarios de cada persona y el aporte '
+            'nutricional diario de cada alimento.'
+        )
+        estado = 'normal' if cantidad and not self.ocupada else 'disabled'
+        self.boton_ejecutar.configure(state=estado)
+        self.boton_req.configure(state=estado)
+
+    def limpiar_resultados(self):
+        self.consulta = None
+        self.seleccionado = None
+        self.resultados = []
+        self.escenarios.mostrar(pd.DataFrame())
+        self.aportes_alimentos.mostrar()
+        for tabla in self.tablas.values():
+            tabla.mostrar(pd.DataFrame())
+        self.selector_vista.configure(values=(), state='disabled')
+        self.vista.set('')
+        self.boton_exportar.configure(state='disabled')
+        self.escribir_notas('')
+
+    def invalidar(self):
+        self.revision += 1
+        self.limpiar_resultados()
+        self.resumen.set('La configuración cambió. Calcula nuevamente para ver los resultados.')
+        self.actualizar_revision()
 
     def iniciar(self, solo_requerimientos=False):
         if self.ocupada:
             return
         try:
-            datos = {clave: variable.get() for clave, variable in self.variables.items()}
-            persona = crear_persona(datos)
-            modo = 'Solo requerimientos' if solo_requerimientos else datos['modo']
-            opciones = {}
-            if modo in ('Comparar ambos', 'Costo mínimo'):
-                opciones['penalizaciones_min'] = {
-                    n: numero(datos[f'min_{n}'], f'Penalización costo: {n}')
-                    for n in ('energia', 'colesterol')
-                }
-            if modo in ('Comparar ambos', 'Con presupuesto'):
-                opciones['presupuesto'] = numero(datos['presupuesto'], 'Presupuesto')
-                opciones['pesos'] = leer_pesos(self.pesos.get('1.0', 'end'))
-                opciones['penalizaciones_max'] = {
-                    n: numero(datos[f'max_{n}'], f'Penalización cobertura: {n}')
-                    for n in ('energia', 'colesterol')
-                }
+            if not self.miembros:
+                raise ValueError('Agrega al menos un integrante antes de calcular.')
+            personas = [crear_persona(dict(datos)) for datos in self.miembros]
+            opciones = {'solo_requerimientos': solo_requerimientos}
+            if not solo_requerimientos:
+                opciones.update(
+                    dias=numero(self.variables['dias'].get(), 'Días', minimo=1, maximo=365, entero=True),
+                    presupuesto=numero(self.variables['presupuesto'].get(), 'Presupuesto total')
+                    if self.variables['modo'].get() == 'Con presupuesto' else None,
+                    exclusiones=tuple(self.exclusiones), limites=dict(self.limites),
+                    region=self.variables['region'].get(),
+                    penalizaciones_min={n: numero(self.variables[f'min_{n}'].get(), f'Penalización costo: {n}')
+                                        for n in ('energia', 'colesterol')},
+                )
+                if opciones['presupuesto'] is not None:
+                    opciones['pesos'] = leer_pesos(self.pesos.get('1.0', 'end'))
+                    opciones['penalizaciones_max'] = {
+                        n: numero(self.variables[f'max_{n}'].get(), f'Penalización cobertura: {n}')
+                        for n in ('energia', 'colesterol')
+                    }
+            ruta = self.variables['catalogo'].get()
         except (ValueError, KeyError) as error:
             messagebox.showerror('Revisa los datos', str(error), parent=self)
             return
         self.ocupada = True
-        self.consulta = None
-        self.seleccionado = None
-        self.escenarios.mostrar(pd.DataFrame())
-        self.aportes_alimentos.mostrar()
-        for tabla in self.tablas.values():
-            tabla.mostrar(pd.DataFrame())
-        self.escribir_notas('Calculando una nueva consulta…')
-        self.resumen.set(f'Calculando: {persona.nombre}, {persona.edad:g} años · {modo}')
-        for boton in (self.boton_req, self.boton_ejecutar, self.boton_exportar):
-            boton.configure(state='disabled')
+        revision = self.revision
+        self.limpiar_resultados()
+        self.actualizar_revision()
+        self.resumen.set('Calculando la canasta…')
+        self.estado.set('Calculando requerimientos y escenarios del hogar…')
+        self.pasos.select(self.paginas[2])
         self.progreso.start(12)
-        self.estado.set('Calculando requerimientos y resolviendo escenarios…')
 
         # El hilo recibe una instantánea; únicamente el hilo principal accede a Tk.
         def trabajo():
             try:
-                resultado = ejecutar_demo(persona, datos['catalogo'], modo, **opciones)
-                self.cola.put(('ok', resultado))
+                resultado = ejecutar_canasta(personas, ruta, **opciones)
+                self.cola.put(('ok', revision, resultado))
             except Exception as error:
-                self.cola.put(('error', f'{type(error).__name__}: {error}'))
+                self.cola.put(('error', revision, f'{type(error).__name__}: {error}'))
 
         Thread(target=trabajo, daemon=True).start()
         self.after(100, self.recibir)
 
     def recibir(self):
         try:
-            estado, resultado = self.cola.get_nowait()
+            estado, revision, resultado = self.cola.get_nowait()
         except Empty:
             self.after(100, self.recibir)
             return
         self.ocupada = False
         self.progreso.stop()
-        self.boton_req.configure(state='normal')
-        self.boton_ejecutar.configure(state='normal')
+        self.actualizar_revision()
+        if revision != self.revision:
+            self.estado.set('La configuración cambió durante el cálculo. Vuelve a calcular.')
+            return
         if estado == 'error':
             self.resumen.set('No se pudo completar la consulta. Revisa los datos y el catálogo.')
             self.estado.set('Consulta no completada.')
@@ -426,111 +610,110 @@ class DemoDieta(tk.Tk):
             return
         self.mostrar_consulta(resultado)
 
-    def mostrar_consulta(self, consulta):
-        self.consulta = consulta
-        persona = consulta['persona']
-        evaluacion = consulta['evaluacion_peso']
-        energia = consulta['requerimientos']['energia']['ree']
-        self.resumen.set(f'{persona.nombre} · {persona.sexo} · {persona.edad:g} años · '
-                         f'{persona.peso:g} kg · {persona.altura:g} m · Actividad: {persona.naf}\n'
-                         f"Estado del peso: {evaluacion['estado_de_indicador']} · "
-                         f"Peso usado: {persona.peso_para_calculos:.2f} kg · "
-                         f'Energía requerida: {energia:.2f} kcal/día\n'
-                         'Selecciona un escenario. ★ indica la propuesta según la función objetivo de cada modelo.')
+    def mostrar_requerimientos(self, perfiles):
         filas = []
-
-        def aplanar(valor, ruta=''):
+        def aplanar(valor, persona, ruta=''):
             if isinstance(valor, dict):
                 for clave, contenido in valor.items():
-                    aplanar(contenido, f'{ruta} / {clave}' if ruta else clave)
+                    aplanar(contenido, persona, f'{ruta} / {clave}' if ruta else clave)
             else:
-                filas.append({'referencia': ruta, 'valor': valor})
-
-        aplanar(consulta['evaluacion_peso'], 'evaluacion_peso')
-        aplanar(consulta['requerimientos'])
+                filas.append({'persona': persona, 'referencia': ruta, 'valor': valor})
+        for perfil in perfiles:
+            aplanar(perfil['evaluacion_peso'], perfil['persona'].nombre, 'evaluacion_peso')
+            aplanar(perfil['requerimientos'], perfil['persona'].nombre)
         self.tablas['Requerimientos'].mostrar(pd.DataFrame(filas))
-        resumen = []
-        for resultado in consulta['resultados']:
-            propuesta = consulta['propuestas'].get(resultado['tipo']) is resultado
-            resumen.append({
-                'propuesta': '★' if propuesta else '', 'modelo': resultado['tipo'],
-                'escenario': resultado['escenario'], 'estado': resultado['estado'],
-                'costo_Q': resultado['costo_total_q'],
-                'cobertura_ponderada_%': resultado.get('cobertura_ponderada_pct'),
-                'objetivo': resultado['valor_objetivo'],
-                'penalizacion': resultado['penalizacion_total'],
-            })
-        self.escenarios.mostrar(pd.DataFrame(resumen))
-        if resumen:
-            indice = next((i for i, fila in enumerate(resumen) if fila['propuesta']), 0)
-            self.escenarios.tree.selection_set(str(indice))
-            self.escenarios.tree.focus(str(indice))
-            self.seleccionar()
-        else:
+
+    def mostrar_consulta(self, consulta):
+        self.consulta = consulta
+        self.pasos.select(self.paginas[3])
+        hogar = consulta['hogar']
+        if hogar is None:
+            self.mostrar_requerimientos(consulta['perfiles'])
+            self.resumen.set('Requerimientos diarios de los integrantes calculados.')
             self.detalles.select(self.tablas['Requerimientos'])
-            self.escribir_notas('Requerimientos calculados. Ejecuta la optimización para ver las canastas.')
-        optimos = sum(r['estado'] == 'Optimal' for r in consulta['resultados'])
-        self.estado.set(f'Consulta terminada: {optimos} de {len(resumen)} escenarios óptimos.'
-                        if resumen else 'Requerimientos calculados.')
+            self.estado.set('Requerimientos calculados.')
+            return
+        nombres = [vista['nombre'] for vista in consulta['vistas']]
+        self.selector_vista.configure(values=nombres, state='readonly')
+        self.selector_vista.current(1 if len(consulta['perfiles']) == 1 else 0)
+        for nombre, clave in (('Comparación de repartos', 'comparacion_repartos'),
+                             ('Reparto del período', 'reparto_periodo')):
+            datos = hogar.get(clave)
+            self.tablas[nombre].mostrar(datos if datos is not None else pd.DataFrame())
+        self.cambiar_vista()
+        self.estado.set(f"Consulta terminada: {hogar['estado']} · {hogar['motivo_parada']}")
+
+    def cambiar_vista(self, event=None):
+        if self.consulta is None:
+            return
+        indice = self.selector_vista.current()
+        if indice < 0:
+            return
+        vista = self.consulta['vistas'][indice]
+        self.resultados = vista['resultados']
+        self.mostrar_requerimientos([vista['perfil']] if vista['perfil'] else self.consulta['perfiles'])
+        self.escenarios.mostrar(pd.DataFrame([
+            {'propuesta': '★' if r['propuesta'] else '', 'modelo': r['tipo'],
+             'escenario': r['escenario'], 'estado': r['estado'], 'costo_diario_Q': r['costo_total_q'],
+             'cobertura_ponderada_pct': r.get('cobertura_ponderada_pct')}
+            for r in self.resultados
+        ]))
+        # Preferir el modelo con presupuesto cuando existe, conservando los otros escenarios.
+        elegido = next((i for i in reversed(range(len(self.resultados)))
+                        if self.resultados[i]['propuesta']), 0)
+        if vista['perfil'] is None:
+            elegido = len(self.resultados) - 1
+        if self.resultados:
+            self.escenarios.tree.selection_set(str(elegido))
+            self.escenarios.tree.focus(str(elegido))
+            self.seleccionar()
 
     def seleccionar(self, event=None):
         indices = self.escenarios.tree.selection()
-        if not indices or self.consulta is None:
+        if not indices or self.consulta is None or not self.resultados:
             return
-        resultado = self.consulta['resultados'][int(indices[0])]
+        indice = int(indices[0])
+        if indice >= len(self.resultados):
+            return
+        resultado = self.resultados[indice]
         self.seleccionado = resultado
+        dias = self.consulta['dias']
         optimo = resultado['estado'] == 'Optimal'
-        alimentos = resultado['alimentos']
-        self.tablas['Alimentos'].mostrar(alimentos.loc[alimentos['porciones_100g'] > 1e-6])
+        self.tablas['Alimentos'].mostrar(tabla_alimentos(resultado))
+        self.tablas['Compra del período'].mostrar(tabla_alimentos(resultado, dias))
         self.tablas['Nutrientes'].mostrar(tabla_nutrientes(resultado))
         self.aportes_alimentos.mostrar(resultado)
         self.tablas['Diagnóstico'].mostrar(resultado['diagnostico_restricciones'])
         self.boton_exportar.configure(state='normal' if optimo and not self.ocupada else 'disabled')
-        notas = [f"{resultado['tipo']} · {resultado['escenario']}", f"Estado: {resultado['estado']}"]
-        if optimo:
-            notas.extend([
-                f"Costo diario de alimentos: Q {resultado['costo_total_q']:.2f}",
-                f"Valor de la función objetivo: {resultado['valor_objetivo']:.4f}",
-                f"Penalización total: {resultado['penalizacion_total']:.4f}",
-                f"Coeficientes de penalización: {resultado['penalizaciones']}",
-                f"Energía requerida con el peso evaluado: {resultado['restricciones']['energia_kcal']['ct']:.2f} kcal/día",
-                f"Energía aportada por la canasta: {resultado['aportes']['energia_kcal']:.2f} kcal/día",
-                *[f'{nombre}: {valor:.4f}' for nombre, valor in resultado['desviaciones'].items()],
-            ])
-            if 'coberturas' in resultado:
-                notas.extend([
-                    f"Presupuesto diario: Q {resultado['presupuesto_q']:.2f}",
-                    f"Cobertura media: {resultado['cobertura_media_pct']:.2f} %",
-                    f"Cobertura ponderada: {resultado['cobertura_ponderada_pct']:.2f} %",
-                    f"Pesos utilizados: {resultado['pesos_nutrientes']}",
-                ])
-            minimo = self.consulta['propuestas'].get('Costo mínimo')
-            if minimo is not None and 'presupuesto_q' in self.consulta:
-                diferencia = minimo['costo_total_q'] - self.consulta['presupuesto_q']
-                notas.append(f'La propuesta de costo mínimo supera el presupuesto por Q {diferencia:.2f}.'
-                             if diferencia > 1e-6 else 'La propuesta de costo mínimo cabe en el presupuesto.')
-        else:
-            notas.append('No hay solución óptima para este escenario. No se muestran cantidades ni costos válidos.')
-        notas.extend([
-            '', 'Lectura del experimento:',
-            '• Costo mínimo: costo de alimentos + penalizaciones; conserva mínimos y máximos obligatorios.',
-            '• Con presupuesto: suma de coberturas ponderadas − penalizaciones. El objetivo puede ser negativo.',
-            '• Energía: penaliza déficit y exceso. Colesterol: penaliza solo el exceso.',
-            '• La energía requerida procede del peso evaluado. La energía aportada por los alimentos puede diferir de esa referencia flexible.',
-            '• Las coberturas se limitan a 100 % por nutriente. La media puede ocultar déficits individuales.',
-            '• En cobertura, los mínimos nutricionales se vuelven metas; los máximos y las condiciones de hierro siguen siendo obligatorios.',
-            '• Alimentos: gramos y porciones de 100 g comprados. Los aportes descuentan la fracción no comestible.',
-            '• En Nutrientes, carne_g y sus límites se muestran en gramos comestibles (30 / 90 g).',
-            '• Se usa el último precio general disponible de cada alimento; en su ausencia, urbano y luego rural.',
-            '• Las propuestas se eligen por su función objetivo, incluidas las penalizaciones; cada modelo se compara por separado.',
-            '• No se distribuyen comidas ni se exige variedad o cantidades enteras.',
-            '', f"Catálogo: {self.consulta['catalogo']} ({self.consulta['cantidad_alimentos']} alimentos)",
-        ])
-        self.escribir_notas('\n'.join(notas))
+        hogar = self.consulta['hogar']
+        costo = resultado['costo_total_q']
+        costos = (f'Costo diario: Q {costo:.2f} · Costo de {dias} días: Q {costo * dias:.2f}'
+                  if costo is not None else 'Sin compra válida para este escenario.')
+        self.resumen.set(f"{self.vista.get()} · {resultado['tipo']} · {resultado['estado']} · "
+                         f"Región: {self.consulta['region_catalogo']}\n"
+                         f"{costos}\nEstado del hogar: {hogar['estado']} · {hogar['motivo_parada']}")
+        vista = self.consulta['vistas'][self.selector_vista.current()]
+        if vista['perfil']:
+            perfil = vista['perfil']
+            self.resumen.set(self.resumen.get() +
+                             f"\nPeso usado: {perfil['persona'].peso_para_calculos:.2f} kg · "
+                             f"Energía requerida: {perfil['requerimientos']['energia']['ree']:.2f} kcal/día")
+        self.escribir_notas(
+            f"{self.vista.get()} · {resultado['escenario']}\n{costos}\n\n"
+            'Alimentos y Aporte por alimento muestran cantidades y valores nutricionales DIARIOS.\n'
+            f'Compra del período y la exportación multiplican cantidades, costos y aportes por {dias} días.\n'
+            'Los aportes nutricionales descuentan la fracción no comestible.\n'
+            'Nutrientes compara aportes diarios con referencias y límites del modelo.\n'
+            'El hogar suma las propuestas elegidas; revisa cada persona para evaluar su cobertura.\n'
+            '★ identifica la propuesta de cada modelo según su función objetivo, incluidas penalizaciones.\n'
+            'Costo mínimo conserva mínimos nutricionales; con presupuesto los convierte en metas.\n'
+            'Los límites de alimentos son gramos comprados por persona y día, en ambos modelos.\n'
+            'Una propuesta de costo mínimo puede superar el presupuesto total configurado.\n'
+            'El reparto y su comparación corresponden al cálculo final con presupuesto, cuando existe.\n'
+            'No se distribuyen comidas ni se exige variedad o cantidades enteras.'
+        )
         if not optimo:
             self.detalles.select(self.notas)
-        elif self.detalles.select() != str(self.aportes_alimentos):
-            self.detalles.select(self.tablas['Alimentos'])
 
     def escribir_notas(self, texto):
         self.notas.configure(state='normal')
@@ -545,8 +728,8 @@ class DemoDieta(tk.Tk):
                                             initialfile='canasta_demo.csv', filetypes=[('CSV', '*.csv')])
         if ruta:
             try:
-                alimentos = self.seleccionado['alimentos']
-                alimentos.loc[alimentos['porciones_100g'] > 1e-6].to_csv(ruta, index=False, encoding='utf-8-sig')
+                tabla_alimentos(self.seleccionado, self.consulta['dias']).to_csv(
+                    ruta, index=False, encoding='utf-8-sig')
             except OSError as error:
                 messagebox.showerror('No se pudo exportar', str(error), parent=self)
             else:

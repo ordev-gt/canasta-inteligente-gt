@@ -169,6 +169,22 @@ class FoodCatalog:
         self._foods: dict[str, Food] = {}
         self._aliases: dict[str, str] = {}
 
+    def reset_aliases(self):
+        new_aliases = {}
+        
+        for food_id, food in self._foods().items():
+            for alias in food.aliases:
+                if alias not in new_aliases:
+                    new_aliases[alias] =  food_id
+                else:
+                    new_aliases[alias] =  new_aliases[alias].append([food_id])
+                    
+
+    def resolve_by_alias(self, alias):
+        if alias not in self._aliases:
+            return None
+        return self._aliases[alias]
+
     def add(self, food: Food, normalized_aliases: set[str] | None = None) -> Food:
         if food.id in self._foods:
             raise ValueError(f"Ya existe el alimento canónico {food.id}")

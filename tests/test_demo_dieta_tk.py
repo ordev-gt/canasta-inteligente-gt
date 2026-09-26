@@ -175,26 +175,68 @@ class DemoRegressionTests(unittest.TestCase):
 @unittest.skipUnless(os.environ.get('RUN_TK_TESTS') == '1' and DEFAULT_PICKLE.is_file(),
                      'Prueba de Tkinter opcional: RUN_TK_TESTS=1 y catálogo local')
 class DemoWidgetTests(unittest.TestCase):
+    def test_edit_members_restrictions_and_requirements_without_catalog(self):
+        app = DemoDieta()
+        app.withdraw()
+        try:
+            app.update()
+            app.agregar_miembro()
+            app.tabla_miembros.tree.selection_set('0')
+            app.editar_miembro()
+            app.variables['nombre'].set('Perfil editado')
+            app.guardar_miembro()
+            self.assertEqual(app.miembros[0]['nombre'], 'Perfil editado')
+            food_id = app.alimentos_catalogo[app.alimento.get()]
+            app.limite_gramos.set('50')
+            app.agregar_limite()
+            self.assertEqual(app.limites[food_id], 50)
+            app.excluir_alimento()
+            self.assertNotIn(food_id, app.limites)
+            self.assertIn(food_id, app.exclusiones)
+            app.tabla_restricciones.tree.selection_set('0')
+            app.eliminar_restriccion()
+            self.assertFalse(app.exclusiones)
+            app.variables['catalogo'].set('missing.pkl')
+            app.iniciar(True)
+            self.esperar(app)
+            self.assertIsNone(app.consulta['hogar'])
+            self.assertTrue(app.tablas['Requerimientos'].tree.get_children())
+            app.tabla_miembros.tree.selection_set('0')
+            app.eliminar_miembro()
+            self.assertEqual(app.miembros, [])
+            self.assertIsNone(app.consulta)
+            self.assertIn('disabled', app.boton_ejecutar.state())
+        finally:
+            app.destroy()
+
+    def esperar(self, app):
+        deadline = time.monotonic() + 45
+        while app.ocupada and time.monotonic() < deadline:
+            app.update()
+            time.sleep(0.02)
+        app.update()
+        self.assertFalse(app.ocupada, 'La consulta no termino a tiempo')
+
     def test_background_run_selection_and_error_recovery(self):
         app = DemoDieta()
         app.withdraw()
         errors = []
         app.report_callback_exception = lambda *args: errors.append(args)
         try:
-            app.iniciar()
-            deadline = time.monotonic() + 30
-            while app.ocupada and time.monotonic() < deadline:
-                app.update()
-                time.sleep(0.02)
             app.update()
-            self.assertFalse(app.ocupada, 'La consulta no terminó a tiempo')
+            self.assertIn('disabled', app.boton_ejecutar.state())
+            app.agregar_miembro()
+            app.variables['dias'].set('7')
+            app.variables['presupuesto'].set('105')
+            app.variables['region'].set('urbana')
+            app.iniciar()
+            self.esperar(app)
+            self.assertEqual(app.consulta['region_catalogo'], 'urbana')
+            self.assertIn('Región: urbana', app.resumen.get())
             self.assertEqual(len(app.escenarios.tree.get_children()), 8)
-            self.assertIsNotNone(app.seleccionado)
-            self.assertIn('Peso usado: 70.00 kg', app.resumen.get())
-            self.assertIn('Energía requerida: 2706.59 kcal/día', app.resumen.get())
-            referencias = [app.tablas['Requerimientos'].tree.item(i, 'values')[0]
-                           for i in app.tablas['Requerimientos'].tree.get_children()]
-            self.assertIn('evaluacion_peso / peso_para_calculos', referencias)
+            self.assertEqual(app.selector_vista.current(), 1)
+            self.assertEqual(app.seleccionado['tipo'], 'Con presupuesto')
+            self.assertIn('energia_kcal', app.tablas['Alimentos'].tree['columns'])
             self.assertTrue(app.tablas['Alimentos'].tree.get_children())
             app.detalles.select(app.aportes_alimentos)
             app.aportes_alimentos.nutriente.set('proteina_g')
@@ -205,32 +247,69 @@ class DemoWidgetTests(unittest.TestCase):
             for indice in range(8):
                 app.escenarios.tree.selection_set(str(indice))
                 app.update()
-                self.assertEqual(app.seleccionado, app.consulta['resultados'][indice])
+                self.assertIs(app.seleccionado, app.resultados[indice])
                 self.assertEqual(app.aportes_alimentos.nutriente.get(), 'proteina_g')
-                self.assertEqual(app.detalles.select(), str(app.aportes_alimentos))
                 self.assertIs(app.aportes_alimentos.resultado, app.seleccionado)
-            app.variables['presupuesto'].set('0')
-            app.variables['modo'].set('Con presupuesto')
+            app.variables['nombre'].set('Segundo integrante')
+            app.agregar_miembro()
+            self.assertIsNone(app.consulta)
+            self.assertIn('disabled', app.boton_exportar.state())
             app.iniciar()
-            deadline = time.monotonic() + 30
-            while app.ocupada and time.monotonic() < deadline:
-                app.update()
-                time.sleep(0.02)
+            self.esperar(app)
+            self.assertEqual(len(app.consulta['vistas']), 3)
+            self.assertEqual(app.selector_vista.current(), 0)
+            self.assertTrue(app.aportes_alimentos.tabla.tree.get_children())
+            app.selector_vista.current(2)
+            app.cambiar_vista()
+            self.assertEqual(len(app.escenarios.tree.get_children()), 8)
+            app.variables['presupuesto'].set('0')
+            app.iniciar()
+            self.esperar(app)
+            app.selector_vista.current(1)
+            app.cambiar_vista()
+            fallidos = [i for i, r in enumerate(app.resultados) if r['estado'] != 'Optimal']
+            self.assertTrue(fallidos)
+            app.escenarios.tree.selection_set(str(fallidos[-1]))
             app.update()
-            self.assertFalse(app.ocupada)
-            app.escenarios.tree.selection_set('1')
-            app.update()
-            self.assertEqual(app.seleccionado['estado'], 'Infeasible')
             self.assertFalse(app.tablas['Alimentos'].tree.get_children())
             self.assertFalse(app.aportes_alimentos.tabla.tree.get_children())
             self.assertIn('disabled', app.aportes_alimentos.selector.state())
             self.assertIn('disabled', app.boton_exportar.state())
             with patch('canasta_inteligente.application.demo_dieta_tk.messagebox.showerror') as dialog:
-                app.variables['edad'].set('nan')
+                app.variables['dias'].set('nan')
                 app.iniciar()
                 dialog.assert_called_once()
                 self.assertFalse(app.ocupada)
+            app.variables['dias'].set('7')
+            app.iniciar()
+            app.variables['region'].set('rural')
+            self.esperar(app)
+            self.assertIsNone(app.consulta)
+            self.assertIn('Vuelve a calcular', app.estado.get())
             self.assertEqual(errors, [])
+        finally:
+            app.destroy()
+
+    def test_region_refreshes_available_foods_and_removes_unavailable_limits(self):
+        from canasta_inteligente.application.demo_canasta import seleccionar_catalogo_region
+        app = DemoDieta()
+        app.withdraw()
+        try:
+            app.update()
+            catalog = load_catalog_pickle()
+            rural = seleccionar_catalogo_region(catalog, 'rural')
+            ids_rurales = {food.id for food in rural}
+            no_disponible = next(food.id for food in catalog if food.id not in ids_rurales)
+            etiqueta = next(nombre for nombre, food_id in app.alimentos_catalogo.items() if food_id == no_disponible)
+            app.alimento.set(etiqueta)
+            app.agregar_limite()
+            app.variables['region'].set('rural')
+            self.assertEqual(set(app.alimentos_catalogo.values()), ids_rurales)
+            self.assertNotIn(no_disponible, app.limites)
+            self.assertIn('Se retiraron 1 restricciones', app.catalogo_estado.get())
+            self.assertIn('Región del catálogo: rural', app.revision_texto.get())
+            app.variables['region'].set('general')
+            self.assertEqual(len(app.alimentos_catalogo), len(catalog))
         finally:
             app.destroy()
 

@@ -250,7 +250,7 @@ class Peso:
 
         imc = p.peso / (p.altura ** 2)
 
-        peso_de_referencia = IMC_REFERENCIA_INCAP * (p.altura ** 2)
+        peso_de_referencia = Peso.obetener_peso_de_referencia(p.altura)
 
         if IMC_ADULTO_MIN <= imc <= IMC_ADULTO_MAX:
             peso_para_calculos = p.peso
@@ -461,6 +461,11 @@ class Peso:
             return Peso.evaluacion_peso_nino_adolescente(p)
 
         return Peso.evaluacion_peso_adulto(p)
+
+    @staticmethod
+    def obetener_peso_de_referencia(altura):
+        return IMC_REFERENCIA_INCAP * (altura ** 2)
+
 
 class Energia:
 

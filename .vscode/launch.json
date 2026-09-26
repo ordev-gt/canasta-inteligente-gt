@@ -1,6 +1,90 @@
 {
     "version": "0.2.0",
     "configurations": [
+    {
+        "name": "Debug Streamlit demo",
+        "type": "debugpy",
+        "request": "launch",
+        "module": "streamlit",
+        "python": "${workspaceFolder}/venv/Scripts/python.exe",
+        "cwd": "${workspaceFolder}",
+        "env": {
+            "PYTHONPATH": "${workspaceFolder}/src",
+            "PYTHONUTF8": "1"
+        },
+        "args": [
+            "run",
+            "${workspaceFolder}/src/canasta_inteligente/application/streamlit_demo.py"
+        ],
+        "console": "integratedTerminal",
+        "justMyCode": true
+    },
+        {
+            "name": "Debug canasta familiar",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.application.probar_familia",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "PYTHONUTF8": "1"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "testing person canasta",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.application.probar_persona",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "PYTHONUTF8": "1"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Debug optimización dieta (Tkinter)",
+            "type": "debugpy",
+            "request": "launch",      
+            "module": "canasta_inteligente.application.demo_dieta_tk",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "PYTHONUTF8": "1"
+            },
+            "console": "integratedTerminal",
+            "justMyCode": true
+            
+
+        },
+        {
+            "name": "Debug optimización dieta (consola)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "canasta_inteligente.application.demo_dieta_cli",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src",
+                "PYTHONUTF8": "1"
+            },
+            "args": [
+                "--modo", "comparar",
+                "--edad", "25",
+                "--sexo", "hombre",
+                "--peso", "70",
+                "--altura", "1.70",
+                "--presupuesto", "15"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
         {
             "name": "Debug main nutrition evaluation",
             "type": "debugpy",

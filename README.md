@@ -79,6 +79,43 @@ catalog, summary = process_cba_pipeline()
 catalog = load_catalog_pickle()
 ```
 
+## Optimización de dieta por consola y depuración
+
+La consola comparte con Tkinter la creación del perfil y el flujo de
+`optimizacion_dieta`: evalúa requerimientos, resuelve los cuatro escenarios de cada
+modelo y selecciona una propuesta según su función objetivo. Sin argumentos usa
+el mismo perfil inicial de la demo (hombre de 25 años, 70 kg, 1.70 m, actividad baja)
+y compara costo mínimo con cobertura bajo un presupuesto diario de Q15.
+
+```powershell
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py --modo requerimientos
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py --modo costo --sexo mujer --edad 30 --peso 60 --altura 1.60
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py --modo presupuesto --presupuesto 20 --peso-nutriente proteina_g=2 --max-energia 1 --max-colesterol 0.1
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py --detalle todos --aporte-nutriente proteina_g
+.\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta_cli.py --help
+```
+
+También se ejecuta como módulo con
+`python -m canasta_inteligente.application.demo_dieta_cli` si el proyecto está
+instalado. `--catalog` permite elegir el catálogo; el modo `requerimientos` no lo
+necesita. `--help` enumera las opciones de embarazo, lactancia, exposición solar,
+actividad, pesos nutricionales y penalizaciones. Se aceptan decimales con punto o coma.
+La salida incluye los requerimientos, el resumen de todos los escenarios y las
+tablas de alimentos, nutrientes y diagnóstico de las propuestas; `--detalle todos`
+amplía el detalle al resto. Los escenarios sin solución óptima se indican con su estado.
+Una ejecución completada devuelve código 0, incluso si hay escenarios infactibles;
+los errores de argumentos, catálogo ausente o ejecución del solver devuelven código 2.
+
+Para depurar, abre **Ejecutar y depurar** en VS Code, selecciona
+**Debug optimización dieta (consola)** y pulsa **F5**. La configuración usa el Python
+de `venv`, la terminal integrada y los argumentos de `.vscode/launch.json`, que
+puedes editar. Coloca un breakpoint en `ejecutar_desde_argumentos` de
+`src/canasta_inteligente/application/demo_dieta_cli.py` y entra con **F11** en
+`ejecutar_demo`, `preparar_consulta`, `minimizar_costo` o `maximizar_cobertura`.
+Después de ejecutar puedes inspeccionar `consulta`, incluidos los modelos PuLP,
+variables, restricciones, resultados y propuestas.
+
 ## Demo de optimización de dieta en Tkinter
 
 La lógica de [optimizacion_dieta.ipynb](notebooks/optimizacion_dieta.ipynb) también
@@ -89,24 +126,40 @@ proyecto, con las dependencias instaladas:
 .\venv\Scripts\python.exe -X utf8 scripts/demo_optimizacion_dieta.py
 ```
 
-La demo permite editar el perfil (incluidos embarazo y lactancia), consultar sus
-requerimientos y ejecutar costo mínimo, cobertura con presupuesto o ambos.
-El encabezado muestra el peso evaluado usado en los cálculos y la energía requerida;
-la pestaña **Requerimientos** incluye la evaluación del peso. Se utiliza el mismo
-servicio del notebook: evalúa el peso antes de calcular energía y los nutrientes
-que dependen de ella. La energía aportada por la canasta puede diferir del
-requerimiento, ya que el modelo penaliza su desviación respecto a esa referencia.
-En **Modelo y pesos** puedes ajustar el presupuesto diario, los pesos por nutriente
-y las penalizaciones de energía y colesterol de cada modelo. Los pesos se escriben
-como `vitamina_d_mcg = 0.25`, uno por línea; los omitidos valen 1.
+La demo sigue el flujo de `streamlit_demo.py` en cuatro pasos:
+
+1. **Integrantes:** agrega, edita o elimina perfiles, incluidos embarazo y lactancia.
+   Un integrante produce una dieta personal; varios, una canasta familiar.
+2. **Configuración:** indica los días y el presupuesto **total del período y del hogar**.
+   Elige la **región del catálogo**: `general` conserva todos los alimentos y prioriza
+   precios generales (si faltan, urbanos y luego rurales); `urbana` y `rural` usan
+   exclusivamente alimentos con precio válido de la región seleccionada.
+   La interfaz informa cuántos alimentos están disponibles. Al cambiar de región,
+   se retiran las restricciones de alimentos no disponibles y se pide recalcular.
+   Puedes excluir alimentos y limitar sus gramos comprados **por persona y día**;
+   los límites se respetan tanto en costo mínimo como con presupuesto.
+3. **Calcular canasta:** revisa el resumen y calcula, o consulta solo los requerimientos
+   sin necesitar el catálogo. El cálculo se ejecuta sin bloquear la interfaz.
+4. **Resultados:** selecciona el hogar completo o una persona para consultar sus dietas.
+   También se muestran la comparación del reparto de presupuesto y la distribución
+   de alimentos entre integrantes para el período.
+
+**Costo mínimo** calcula sin un tope de presupuesto. **Con presupuesto** conserva
+también los escenarios de costo mínimo para compararlos con la propuesta final.
+En **Modelo y pesos** puedes ajustar los pesos por nutriente y las penalizaciones
+de energía y colesterol. Los pesos se escriben como `vitamina_d_mcg = 0.25`, uno
+por línea; los omitidos valen 1. **Requerimientos** conserva la evaluación del peso
+usado para calcular energía y los nutrientes que dependen de ella.
 
 Selecciona una fila para ver alimentos, aportes, límites, déficits y diagnóstico.
 La estrella identifica la propuesta por función objetivo de cada modelo.
 El costo de alimentos se muestra separado de las penalizaciones. Los escenarios
 sin solución óptima conservan su estado, sin presentar cantidades como válidas.
-Puedes exportar los alimentos del escenario seleccionado a CSV.
-Las tablas **Alimentos** y **Aporte por alimento** muestran el **Nombre INCAP**
-del alimento emparejado, junto al nombre de la canasta. También se incluye en el CSV.
+**Alimentos / día** muestra los nutrientes de cada alimento en la cantidad diaria
+calculada. **Compra del período** y la exportación CSV incluyen cantidades, costos
+y aportes nutricionales multiplicados por los días, tanto para la dieta personal
+como para la familiar. Se conserva el **Nombre INCAP** junto al nombre de la canasta.
+La región utilizada también aparece en los resultados y en el CSV.
 
 En **Aporte por alimento**, elige un nutriente para ver la contribución diaria de
 cada alimento, su unidad y su porcentaje del total de la canasta, ordenados de mayor
@@ -124,8 +177,8 @@ descrito arriba. También puedes seleccionar otro catálogo generado por el proy
 
 Tkinter forma parte de la instalación estándar de Python para Windows; debe estar
 habilitado el componente Tcl/Tk. No se necesita Jupyter para esta demo.
-La lógica está en `src/canasta_inteligente/application/optimizacion_dieta.py` y la
-interfaz en `src/canasta_inteligente/application/demo_dieta_tk.py`.
+La interfaz está en `src/canasta_inteligente/application/demo_dieta_tk.py`; utiliza
+`demo_canasta.py` para presentar las canastas calculadas por `Family` y `Persona`.
 El notebook se conserva como referencia; las pruebas comparan sus resultados con
 los del módulo extraído.
 
@@ -136,6 +189,51 @@ gramos comestibles. La cobertura media puede ocultar déficits individuales; rev
 la tabla **Nutrientes**. No se distribuyen comidas ni se impone variedad.
 
 ## Canastas para varias personas
+
+### Canasta del hogar con `Family`
+
+`Family.calcular_canasta` utiliza los métodos individuales de `Persona`: minimiza
+las canastas, reparte el presupuesto según sus costos y ajusta ese reparto para
+aproximar las coberturas a la media del hogar. El notebook `optimizacion_dieta.ipynb`
+ya llama a esta clase; no necesitas ejecutar el notebook para usarla desde Python.
+
+```python
+from canasta_inteligente.domain.familia import Family
+from canasta_inteligente.domain.persona import Persona
+from canasta_inteligente.application.cba_pipeline import load_catalog_pickle
+
+familia = Family([
+    Persona("Ana", 35, "mujer", 60, altura=1.60, naf="low"),
+    Persona("Luis", 38, "hombre", 75, altura=1.72, naf="moderate"),
+    Persona("Sofía", 15, "mujer", 50, altura=1.60, naf="moderate"),
+    Persona("Diego", 11, "hombre", 34, altura=1.43, naf="low"),
+])
+resultado = familia.calcular_canasta(dias=7, presupuesto=315, catalog=load_catalog_pickle())
+print(resultado["canasta_periodo"])
+print(resultado["reparto_periodo"])
+print(resultado["comparacion_repartos"])
+```
+
+**El presupuesto es el total del período:** Q315 para siete días equivale a Q45
+diarios para todo el hogar. Los modelos, porcentajes e historial permanecen en
+unidades diarias. `canasta_periodo` y `reparto_periodo` multiplican los gramos,
+porciones y costos por los días; no multiplican precios unitarios ni coberturas.
+`costo_diario_q` y `costo_total_q` distinguen ambos costos. Al omitir `presupuesto`
+se devuelve únicamente la minimización. Si omites `catalog`, se carga el catálogo
+procesado predeterminado.
+
+Los parámetros `pesos_nutrientes`, `penalizaciones_min`, `penalizaciones_max`,
+`tolerancia_pp`, `paso_fraccion` y `max_iteraciones` permiten ajustar el experimento.
+`convergio` y `motivo_parada` explican cómo terminó el ajuste; una solución del solver
+puede ser óptima sin que las coberturas hayan alcanzado la tolerancia de equidad.
+No se modifican los perfiles originales. Si falta una solución individual, no se
+presenta una compra parcial como canasta completa del hogar.
+
+Ejemplo ejecutable (también disponible como **Debug canasta familiar** en VS Code):
+
+```powershell
+.\venv\Scripts\python.exe -X utf8 -m canasta_inteligente.application.probar_familia
+```
 
 El ejemplo ejecutable está en [notebooks/canastas_personas.ipynb](notebooks/canastas_personas.ipynb).
 Con el catálogo procesado, crea el generador una vez y obtén una canasta por persona:

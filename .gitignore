@@ -4,3 +4,6 @@ data/cache/
 *.bak
 items.txt
 __pycache__
+
+# CSV, parámetros y figuras regenerados por el notebook de cobertura.
+/data/processed/analisis_cobertura_cba/
